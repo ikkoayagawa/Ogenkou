@@ -171,7 +171,7 @@
     "test:resources": "npm run build && node scripts/check-resources.mjs",
     "benchmark:edit-to-paper": "npm run build && node scripts/run-edit-to-paper.mjs",
     "test:preview-entry": "npm run build && node scripts/check-preview-entry.mjs",
-    "package": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1"
+    "package": "npm run build && pwsh -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1"
   },
   "dependencies": {
     "@vivliostyle/vfm": "2.7.2",

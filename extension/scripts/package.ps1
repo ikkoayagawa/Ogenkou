@@ -1,10 +1,12 @@
-﻿$ErrorActionPreference = 'Stop'
+#requires -Version 7.0
+$ErrorActionPreference = 'Stop'
+[Console]::OutputEncoding = [Text.UTF8Encoding]::new($false)
 $extensionRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $projectRoot = (Resolve-Path (Join-Path $extensionRoot '..')).Path
 $stageRoot = Join-Path $projectRoot ('.recovery\vsix\' + [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds())
 $stagingExtension = Join-Path $stageRoot 'extension'
 New-Item -ItemType Directory -Path $stagingExtension -Force | Out-Null
-foreach ($name in @('package.json','package-lock.json','extension.cjs','README.md','LICENSE','schemas','syntaxes','src','scripts','test','test-host','tsconfig.json')) {
+foreach ($name in @('package.json','package-lock.json','extension.cjs','README.md','LICENSE','media','schemas','syntaxes','src','scripts','test','test-host','tsconfig.json')) {
     Copy-Item -LiteralPath (Join-Path $extensionRoot $name) -Destination $stagingExtension -Recurse
 }
 New-Item -ItemType Directory -Path (Join-Path $stagingExtension 'dist') -Force | Out-Null
@@ -55,10 +57,10 @@ Copy-Item -LiteralPath (Join-Path $extensionRoot 'THIRD_PARTY_NOTICES.md') -Dest
 $manifest = Get-Content -LiteralPath (Join-Path $extensionRoot 'package.json') -Raw -Encoding UTF8 | ConvertFrom-Json
 $xml = @"
 <?xml version="1.0" encoding="utf-8"?>
-<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011"><Metadata><Identity Language="ja-JP" Id="$($manifest.name)" Version="$($manifest.version)" Publisher="$($manifest.publisher)"/><DisplayName>Ogenkou</DisplayName><Description xml:space="preserve">日本語小説の組版プレビューとPDF出力</Description><Tags>novel,Japanese,preview</Tags><Categories>Other</Categories><Properties><Property Id="Microsoft.VisualStudio.Code.Engine" Value="$($manifest.engines.vscode)"/></Properties><License>extension/LICENSE</License></Metadata><Installation><InstallationTarget Id="Microsoft.VisualStudio.Code"/></Installation><Dependencies/><Assets><Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" Addressable="true"/></Assets></PackageManifest>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011"><Metadata><Identity Language="ja-JP" Id="$($manifest.name)" Version="$($manifest.version)" Publisher="$($manifest.publisher)"/><DisplayName>Ogenkou</DisplayName><Description xml:space="preserve">日本語小説の組版プレビューとPDF出力</Description><Tags>novel,Japanese,preview</Tags><Categories>Other</Categories><Properties><Property Id="Microsoft.VisualStudio.Code.Engine" Value="$($manifest.engines.vscode)"/></Properties><License>extension/LICENSE</License></Metadata><Installation><InstallationTarget Id="Microsoft.VisualStudio.Code"/></Installation><Dependencies/><Assets><Asset Type="Microsoft.VisualStudio.Code.Manifest" Path="extension/package.json" Addressable="true"/><Asset Type="Microsoft.VisualStudio.Services.Content.Details" Path="extension/README.md" Addressable="true"/></Assets></PackageManifest>
 "@
 [IO.File]::WriteAllText((Join-Path $stageRoot 'extension.vsixmanifest'),$xml,[Text.UTF8Encoding]::new($false))
-$types = '<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="json" ContentType="application/json"/><Default Extension="vsixmanifest" ContentType="text/xml"/><Default Extension="md" ContentType="text/markdown"/><Default Extension="js" ContentType="application/javascript"/><Default Extension="mjs" ContentType="application/javascript"/><Default Extension="cjs" ContentType="application/javascript"/><Default Extension="ts" ContentType="text/plain"/><Default Extension="bundle" ContentType="application/octet-stream"/></Types>'
+$types = '<?xml version="1.0" encoding="utf-8"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="json" ContentType="application/json"/><Default Extension="vsixmanifest" ContentType="text/xml"/><Default Extension="md" ContentType="text/markdown"/><Default Extension="js" ContentType="application/javascript"/><Default Extension="mjs" ContentType="application/javascript"/><Default Extension="cjs" ContentType="application/javascript"/><Default Extension="ts" ContentType="text/plain"/><Default Extension="bundle" ContentType="application/octet-stream"/><Default Extension="png" ContentType="image/png"/><Default Extension="gif" ContentType="image/gif"/></Types>'
 [IO.File]::WriteAllText((Join-Path $stageRoot '[Content_Types].xml'),$types,[Text.UTF8Encoding]::new($false))
 $artifacts = Join-Path $extensionRoot 'artifacts'
 New-Item -ItemType Directory -Path $artifacts -Force | Out-Null
