@@ -1,0 +1,12 @@
+{
+  "name": "ogenkou-core-benchmarks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build:upstream": "node build-upstream-comparison.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0",
+    "esbuild": "0.25.12"
+  }
+}

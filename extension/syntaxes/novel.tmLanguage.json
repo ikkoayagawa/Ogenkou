@@ -1,0 +1,10 @@
+{
+  "scopeName": "text.ogenkou",
+  "patterns": [
+    {"begin":"^\\s*(```|~~~)","end":"^\\s*(```|~~~)","name":"markup.raw.block"},
+    {"match":"^#{1,6}\\s+.*$","name":"markup.heading"},
+    {"match":"`[^`\\r\\n]+`","name":"markup.raw.inline"},
+    {"match":"!?\\[[^\\]\\r\\n]*\\]\\([^\\r\\n]*?\\)","name":"markup.underline.link"},
+    {"match":"\\*\\*[^\\r\\n]+?\\*\\*|__[^\\r\\n]+?__","name":"markup.bold"}
+  ]
+}

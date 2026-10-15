@@ -1,0 +1,3 @@
+[submodule "vivliostyle"]
+	path = vivliostyle
+	url = https://github.com/ikkoayagawa/vivliostyle.js.git

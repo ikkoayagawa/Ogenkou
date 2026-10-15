@@ -1,0 +1,33 @@
+import {test} from "node:test";
+import assert from "node:assert/strict";
+import {mkdtemp,writeFile,rm} from "node:fs/promises";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
+import {pathToFileURL} from "node:url";
+import {NodeSnapshotHost} from "../src/services/node-snapshot-host.js";
+import {SnapshotBuilder} from "../src/services/snapshot-builder.js";
+import {RenderInputBuilder} from "../src/services/render-input-builder.js";
+import {compileVfmManuscript} from "../src/compiler/vfm-manuscript.js";
+import {previewInput} from "../src/preview/input.js";
+
+test("portable input keeps style identity across body edits and invalidates CSS changes",async t=>{
+ const dir=await mkdtemp(join(tmpdir(),"ogenkou-preview-"));t.after(()=>rm(dir,{recursive:true,force:true}));
+ const uri=pathToFileURL(join(dir,"01.novel")).href;
+ await writeFile(join(dir,"ogenkou.jsonc"),'{"settingsVersion":1,"style":"custom.css"}');
+ await writeFile(join(dir,"custom.css"),'p{color:black}');await writeFile(join(dir,"01.novel"),'本文。\n\n最後の本文。');
+ const snapshots=new SnapshotBuilder(new NodeSnapshotHost());snapshots.activate(uri);
+ const builder=new RenderInputBuilder(snapshots,{compile:async snapshot=>compileVfmManuscript(snapshot)});
+ const first=previewInput(await builder.build(),{uri,offset:9});assert(first.portable);assert(first.fragment?.startsWith('#epubcfi('));assert.equal(first.resources.length,0);
+ await writeFile(join(dir,"01.novel"),'追加。\n\n本文。\n\n最後の本文。');
+ const second=previewInput(await builder.build(),{uri,offset:14});assert.equal(second.compatibilityKey,first.compatibilityKey);
+ await writeFile(join(dir,"custom.css"),'p{color:red}');
+ const third=previewInput(await builder.build(),{uri,offset:14});assert.notEqual(third.compatibilityKey,first.compatibilityKey);
+ await writeFile(join(dir,"custom.css"),'p{background:url(a.png)}');await writeFile(join(dir,"a.png"),new Uint8Array([1,2,3]));
+ const asset=previewInput(await builder.build(),{uri,offset:14});assert(asset.portable);assert.equal(asset.resources.length,0);assert(asset.html.includes('data:text/css;base64,'));assert.notEqual(asset.compatibilityKey,third.compatibilityKey);
+ await writeFile(join(dir,"custom.css"),'@import "nested.css"; img{width:10mm}');await writeFile(join(dir,"nested.css"),'p{background:url(a.png)}');
+ await writeFile(join(dir,"01.novel"),'本文。\n\n![画像](a.png)\n\n最後の本文。');
+ const imported=previewInput(await builder.build(),{uri,offset:14});assert(imported.portable);assert(imported.html.includes('src="data:image/png;base64,'));assert.equal(imported.resources.length,0);
+ const key=imported.compatibilityKey;await writeFile(join(dir,"a.png"),new Uint8Array([4,5,6]));
+ assert.notEqual(previewInput(await builder.build(),{uri,offset:14}).compatibilityKey,key);
+ snapshots.close();
+});

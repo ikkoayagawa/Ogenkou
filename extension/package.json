@@ -1,0 +1,190 @@
+{
+  "name": "ogenkou",
+  "version": "0.1.7",
+  "private": true,
+  "publisher": "ogenkou-local",
+  "displayName": "Ogenkou",
+  "main": "./extension.cjs",
+  "activationEvents": [
+    "onLanguage:novel"
+  ],
+  "categories": [
+    "Other"
+  ],
+  "contributes": {
+    "commands": [
+      {
+        "command": "ogenkou.preview.open",
+        "title": "Ogenkou: 原稿プレビューを開く"
+      },
+      {
+        "command": "ogenkou.preview.refresh",
+        "title": "Ogenkou: プレビューを更新"
+      },
+      {
+        "command": "ogenkou.preview.restart",
+        "title": "Ogenkou: プレビューを再起動"
+      },
+      {
+        "command": "ogenkou.preview.close",
+        "title": "Ogenkou: プレビューを閉じる"
+      },
+      {
+        "command": "ogenkou.pdf.export",
+        "title": "Ogenkou: PDFを書き出す"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "ogenkou.preview.open",
+          "group": "navigation",
+          "when": "resourceLangId == novel"
+        }
+      ]
+    },
+    "languages": [
+      {
+        "id": "novel",
+        "aliases": [
+          "小説原稿",
+          "Novel"
+        ],
+        "extensions": [
+          ".novel",
+          ".nv"
+        ]
+      }
+    ],
+    "grammars": [
+      {
+        "language": "novel",
+        "scopeName": "text.ogenkou",
+        "path": "./syntaxes/novel.tmLanguage.json"
+      }
+    ],
+    "jsonValidation": [
+      {
+        "fileMatch": "**/ogenkou.jsonc",
+        "url": "./schemas/ogenkou.schema.json"
+      }
+    ],
+    "configuration": {
+      "title": "Ogenkou",
+      "properties": {
+        "ogenkou.pdf.browserPath": {
+          "type": "string",
+          "default": "",
+          "description": "PDF出力に使用する既存Chrome／Edge／Chromiumの実行ファイル。空欄は自動検出。"
+        },
+        "ogenkou.preview.autoUpdate": {
+          "type": "boolean",
+          "default": true,
+          "description": "未保存の編集をプレビューに自動反映する。"
+        },
+        "ogenkou.preview.followCursor": {
+          "type": "boolean",
+          "default": false,
+          "description": "原稿のカーソル移動でも対応する紙面へ追従する。"
+        },
+        "ogenkou.preview.mode": {
+          "type": "string",
+          "enum": [
+            "single",
+            "spread",
+            "auto"
+          ],
+          "default": "single",
+          "description": "プレビューの表示方法。"
+        },
+        "ogenkou.count.includeWhitespace": {
+          "type": "boolean",
+          "default": false,
+          "description": "文字数に空白・改行を含める。"
+        },
+        "ogenkou.highlight.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "ユーザー定義の正規表現ハイライトを有効にする。"
+        },
+        "ogenkou.highlight.rules": {
+          "type": "array",
+          "default": [],
+          "description": "本文の正規表現ハイライト。別Workerで実行し、時間予算を超えた規則は中断します。",
+          "items": {
+            "type": "object",
+            "required": [
+              "pattern"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "pattern": {
+                "type": "string"
+              },
+              "flags": {
+                "type": "string",
+                "default": "u"
+              },
+              "color": {
+                "type": "string"
+              },
+              "backgroundColor": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "ogenkou.count.notation": {
+          "type": "string",
+          "enum": [
+            "body",
+            "source"
+          ],
+          "default": "body",
+          "description": "bodyは小説のルビ・傍点記法を除去。sourceは記法を含む原稿文字数。一般Markdown記号は含みます。"
+        },
+        "ogenkou.count.ruby": {
+          "type": "string",
+          "enum": [
+            "base",
+            "reading",
+            "both"
+          ],
+          "default": "base",
+          "description": "小説記法を除去して数える場合のルビの数え方。親文字／読み／両方。"
+        }
+      }
+    }
+  },
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "description": "日本語小説の縦書き・横書き組版プレビューとPDF出力",
+  "scripts": {
+    "build": "tsc && node scripts/build-runtime.mjs",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test dist/test/*.test.js",
+    "benchmark:snapshot": "npm run build && node dist/test/snapshot-benchmark.js",
+    "test:host": "npm run build && node scripts/check-vscode-host.mjs",
+    "test:compiler-core": "npm run build && node scripts/check-compiler-core.mjs",
+    "test:resources": "npm run build && node scripts/check-resources.mjs",
+    "benchmark:edit-to-paper": "npm run build && node scripts/run-edit-to-paper.mjs",
+    "test:preview-entry": "npm run build && node scripts/check-preview-entry.mjs",
+    "package": "npm run build && powershell -NoProfile -ExecutionPolicy Bypass -File scripts/package.ps1"
+  },
+  "dependencies": {
+    "@vivliostyle/vfm": "2.7.2",
+    "jsonc-parser": "3.3.1",
+    "parse5": "7.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.4",
+    "@types/vscode": "1.138.0",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22.12.0",
+    "vscode": "^1.100.0"
+  }
+}

@@ -1,0 +1,4 @@
+# Measured script copies must retain the exact bytes recorded in environment.json.
+experiments/compiler-host/edit-to-paper/*/sources/* -text whitespace=cr-at-eol,-blank-at-eof
+experiments/preview-benchmark/records/*/browser.mjs -text whitespace=cr-at-eol,-blank-at-eof
+experiments/preview-benchmark/scaling-20261014/*.svg -text -whitespace

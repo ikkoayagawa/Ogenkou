@@ -1,0 +1,10 @@
+export { SnapshotBuilder, naturalCompare, sourceAt } from "./services/snapshot-builder.js";
+export type { SnapshotHost, WorkSnapshot, OpenText, SourcePart, ResourceSnapshot } from "./services/snapshot-builder.js";
+export { SettingsService } from "./services/settings-service.js";
+export type { SettingsView, Preferences, PreferencesStore } from "./services/settings-service.js";
+export { SettingsDraft } from "./services/settings-draft.js";
+export type { DocumentStore, TextRecord } from "./services/contracts.js";
+export { compileManuscript, resolveGeneratedPosition } from "./compiler/manuscript.js";
+export type { CompiledDocument, TextMapping, Heading, Diagnostic } from "./compiler/manuscript.js";
+export { CompilerService } from "./compiler/compiler-service.js";
+export { compileVfmManuscript } from "./compiler/vfm-manuscript.js";

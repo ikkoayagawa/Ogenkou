@@ -1,0 +1,4 @@
+{
+  "version": "0.2.0",
+  "configurations": [{"name":"Run Ogenkou","type":"extensionHost","request":"launch","runtimeExecutable":"${execPath}","args":["--disable-extensions","--extensionDevelopmentPath=${workspaceFolder}/extension"],"outFiles":["${workspaceFolder}/extension/dist/**/*.js"],"preLaunchTask":"Build Ogenkou extension"}]
+}

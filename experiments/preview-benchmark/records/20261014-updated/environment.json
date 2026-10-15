@@ -1,0 +1,68 @@
+{
+  "createdAt": "2026-10-14T11:48:49.245Z",
+  "node": "v24.20.0",
+  "browser": "155.0.8059.40",
+  "os": "Windows_NT 10.0.26300",
+  "cpu": "11th Gen Intel(R) Core(TM) i7-11700 @ 2.50GHz",
+  "ramBytes": 34224697344,
+  "upstream": {
+    "revision": "13d0a9c4918cb91b97ff0253d2da5f0d2dc9de98",
+    "version": "2.45.1",
+    "package": "@vivliostyle/core",
+    "bundle": "${REPOSITORY}\\.recovery\\upstream-comparison\\build\\13d0a9c4918cb91b97ff0253d2da5f0d2dc9de98\\core.js",
+    "resources": "${REPOSITORY}\\.recovery\\upstream-comparison\\build\\13d0a9c4918cb91b97ff0253d2da5f0d2dc9de98\\source\\packages\\core\\resources",
+    "source": "${REPOSITORY}\\.recovery\\upstream-comparison\\build\\13d0a9c4918cb91b97ff0253d2da5f0d2dc9de98\\source",
+    "build": {
+      "target": "es2022",
+      "minify": true,
+      "debug": false
+    },
+    "sha256": "1498f1d188773bd2aa317630166a010db247995f5073d374fe56ee89deac5fa0"
+  },
+  "current": {
+    "revision": "92369e29881b39535de5d6b04b85a9351ecaf7ce",
+    "workingTree": "",
+    "sha256": "ab43ecded5a94a5371b463867b0d9d32ae624a37db1142fe5c6f1edcacd142ef"
+  },
+  "plan": {
+    "sizes": [
+      5000,
+      10000,
+      20000,
+      40000,
+      80000,
+      160000,
+      320000,
+      640000
+    ],
+    "reps": 10,
+    "reps640k": 1,
+    "repetitionsBySize": {
+      "5000": 10,
+      "10000": 10,
+      "20000": 10,
+      "40000": 10,
+      "80000": 10,
+      "160000": 10,
+      "320000": 10,
+      "640000": 1
+    },
+    "warmup": 1,
+    "timeoutMs": 600000,
+    "menus": [
+      "edit"
+    ],
+    "includeFocused": false,
+    "positions": {
+      "early": 0.25,
+      "middle": 0.5,
+      "late": 0.75
+    },
+    "css": "@-epubx-viewport{width:105mm;height:148mm}\n@page{size:105mm 148mm;margin:10.5mm 8.05mm}\nhtml{writing-mode:vertical-rl;font:9pt \"Yu Mincho\",\"YuMincho\",serif;line-height:1.75}\nbody,p{margin:0;padding:0}",
+    "cssHash": "c1860d4aeb469b5253273dc7497e9631446e295ef81e74dd5b00f857f3d39ca3",
+    "browserHarnessHash": "3928773aa76e603b427eb7c2be89f2cfb8c602a3ab19b9098cd12c48e8891382",
+    "trialIsolation": "new browser page per variant; one Chrome process; sequential only",
+    "upstreamFocused": "references the same upstream complete sample; not an additional trial",
+    "metric": "Core invocation including HTML parse and local seed clone through loaded/focusedterminal; baseline setup, IPC, font snapshot, retained clone and paint excluded"
+  }
+}

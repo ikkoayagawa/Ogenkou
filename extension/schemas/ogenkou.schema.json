@@ -1,0 +1,189 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Ogenkou 作品設定",
+  "description": "作品の書誌情報と固定された組版設定です。プレビュー右側の組版設定から編集できます。",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "$schema": { "type": "string" },
+    "settingsVersion": { "type": "integer", "const": 1, "description": "組版設定を作品へ固定済みであることを示します。" },
+    "title": { "type": "string", "description": "publication.title の互換入力。同時指定する場合は同じ値にしてください。" },
+    "publication": {
+      "type": "object", "additionalProperties": true,
+      "properties": {
+        "title": { "type": "string" }, "author": { "type": "string" },
+        "language": { "type": "string", "default": "ja" },
+        "readingProgression": { "type": "string", "enum": ["ltr", "rtl"], "deprecated": true }
+      }
+    },
+    "overrides": {
+      "type": "object", "additionalProperties": true,
+      "description": "この作品の組版設定です。初回プレビュー時に全項目を固定します。固定後の省略項目は内蔵値です。",
+      "properties": {
+        "writingMode": { "type": "string", "enum": ["vertical", "horizontal"] },
+        "layout": {
+          "type": "object", "additionalProperties": true,
+          "properties": {
+            "runningHeadMaxLength": { "type": "string", "default": "14", "pattern": "^(?:|[1-9][0-9]{0,2}|1000)$", "description": "柱の見出しの最大文字数。「…」を含む。空文字列なら省略しない。" },
+            "pageSize": { "type": "string", "examples": ["A5", "115mm,167mm"] },
+            "pageMargin": { "type": "string", "examples": ["auto", "15mm 12mm"] },
+            "mirrorMargins": { "type": "boolean", "description": "trueの場合、余白の右をノド、左を小口として左右ページで反転します。旧作品の未指定は物理左右のままです。" },
+            "fontFamily": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+            "fontSize": { "type": "string", "examples": ["9pt", "3.2mm"] },
+            "lineHeight": { "type": "number", "minimum": 1, "maximum": 4 },
+            "charactersPerLine": { "type": "integer", "minimum": 5, "maximum": 100, "description": "この作品の一行の文字数です。pageMargin=auto の本文版面計算に使われます。" },
+            "linesPerPage": { "type": "integer", "minimum": 5, "maximum": 80, "description": "この作品の一頁の行数です。pageMargin=auto の本文版面計算に使われます。" },
+            "paragraphIndent": { "type": "string", "enum": ["source", "1em", "none"] },
+            "runningHead": { "type": "boolean", "description": "従来形式（furnitureMode=legacy）の柱表示。高度な設定では表記と配置を使います。" },
+            "pageNumber": {
+              "type": "boolean",
+              "description": "従来形式（furnitureMode=legacy）のノンブル表示。高度な設定では表記と配置を使います。"
+            },
+            "furnitureMode": {
+              "type": "string",
+              "enum": [
+                "legacy",
+                "custom"
+              ],
+              "description": "従来の別枠配置または高度な設定の配置。GUIで自動移行します。"
+            },
+            "topFontFamily": {
+              "description": "空の配列の場合は本文のフォントを引き継ぎます。",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 0
+            },
+            "topFontSize": {
+              "type": "string",
+              "pattern": "^(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)pt$",
+              "examples": [
+                "7pt",
+                "9pt"
+              ]
+            },
+            "topDistance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 50,
+              "description": "紙端からの距離（mm）"
+            },
+            "topLeftAlign": {
+              "type": "string",
+              "enum": [
+                "left",
+                "center",
+                "right",
+                "none"
+              ]
+            },
+            "topLeftText": {
+              "type": "string",
+              "maxLength": 256,
+              "description": "$page$はページ番号、$title$は文書タイトル、$h1$〜$h5$は見出し。固定文字も使用でき、空欄は非表示。"
+            },
+            "topRightAlign": {
+              "type": "string",
+              "enum": [
+                "left",
+                "center",
+                "right",
+                "none"
+              ]
+            },
+            "topRightText": {
+              "type": "string",
+              "maxLength": 256,
+              "description": "$page$はページ番号、$title$は文書タイトル、$h1$〜$h5$は見出し。固定文字も使用でき、空欄は非表示。"
+            },
+            "bottomFontFamily": {
+              "description": "空の配列の場合は本文のフォントを引き継ぎます。",
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "minItems": 0
+            },
+            "bottomFontSize": {
+              "type": "string",
+              "pattern": "^(?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+)pt$",
+              "examples": [
+                "7pt",
+                "9pt"
+              ]
+            },
+            "bottomDistance": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 50,
+              "description": "紙端からの距離（mm）"
+            },
+            "bottomLeftAlign": {
+              "type": "string",
+              "enum": [
+                "left",
+                "center",
+                "right",
+                "none"
+              ]
+            },
+            "bottomLeftText": {
+              "type": "string",
+              "maxLength": 256,
+              "description": "$page$はページ番号、$title$は文書タイトル、$h1$〜$h5$は見出し。固定文字も使用でき、空欄は非表示。"
+            },
+            "bottomRightAlign": {
+              "type": "string",
+              "enum": [
+                "left",
+                "center",
+                "right",
+                "none"
+              ]
+            },
+            "bottomRightText": {
+              "type": "string",
+              "maxLength": 256,
+              "description": "$page$はページ番号、$title$は文書タイトル、$h1$〜$h5$は見出し。固定文字も使用でき、空欄は非表示。"
+            },
+            "columnCount": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 4,
+              "description": "段数。未指定は1段。縦書きは上下、横書きは左右に分割。"
+            },
+            "columnGap": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 50,
+              "description": "段間隔（mm）。未指定は5mm。1段では使わない。"
+            }
+          }
+        },
+        "processing": {
+          "type": "object", "additionalProperties": true,
+          "properties": {
+            "titlePage": { "type": "boolean", "default": true, "description": "タイトルがあれば先頭にタイトルページを生成する。" },
+            "toc": {"type": "boolean", "default": true, "description": "紙面内の目次を生成する"},
+            "tocWritingMode": { "type": "string", "enum": ["inherit", "horizontal", "vertical"], "default": "inherit" },
+            "tocLineHeight": { "type": "number", "minimum": 1, "maximum": 4, "default": 2 },
+            "tocDepth": {"type": "integer", "minimum": 1, "maximum": 6, "default": 3, "description": "目次に含める見出しの深さ（1なら # のみ、3なら ### まで）"},
+            "hardLineBreaks": { "type": "boolean" }, "preserveEmptyLines": { "type": "boolean" },
+            "preserveLineIndent": { "type": "boolean" }, "pipeAngleRuby": { "type": "boolean" },
+            "bareKanjiRuby": { "type": "boolean" }, "bracketRuby": { "type": "boolean" },
+            "bracketEmphasis": { "type": "boolean" }, "emphasisMark": { "type": "string" }, "doubleAngleEmphasis": { "type": "boolean" },
+            "connectedDashes": { "type": "boolean" },
+            "verticalQuotes": { "type": "boolean", "description": "縦書きのときだけ適用されます。" },
+            "automaticTcy": { "type": "boolean", "description": "縦書きのときだけ適用されます。" },
+            "kanaMarks": { "type": "boolean", "description": "縦書きのときだけ適用されます。" }
+          }
+        }
+      }
+    },
+    "theme": { "oneOf": [{ "type": "string" }, { "type": "array", "items": { "type": "string" }, "minItems": 0 }], "description": "任意の追加 CSS。通常は指定不要です。" },
+    "style": { "type": "string", "description": "生成CSSの後に適用する作品固有CSS。通常は styles/custom.css。" }, "userStyle": { "type": "string" },
+    "page": { "type": "object", "deprecated": true, "additionalProperties": true, "properties": { "size": { "type": "string" } } },
+    "preview": { "type": "object", "additionalProperties": true, "properties": { "quick": { "type": "boolean", "default": true } } }
+  }
+}

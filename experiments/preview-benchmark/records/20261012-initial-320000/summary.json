@@ -1,0 +1,40 @@
+[
+  {
+    "size": 320000,
+    "mode": "initial",
+    "position": null,
+    "upstreamMode": "initial",
+    "upstream": {
+      "count": 2,
+      "minMs": 31012.299999952316,
+      "medianMs": 31280.699999958277,
+      "maxMs": 31549.099999964237,
+      "meanMs": 31280.699999958277,
+      "standardDeviationMs": 268.40000000596046,
+      "valuesMs": [
+        31549.099999964237,
+        31012.299999952316
+      ]
+    },
+    "current": {
+      "count": 2,
+      "minMs": 18497.899999976158,
+      "medianMs": 18652.44999998808,
+      "maxMs": 18807,
+      "meanMs": 18652.44999998808,
+      "standardDeviationMs": 154.55000001192093,
+      "valuesMs": [
+        18807,
+        18497.899999976158
+      ]
+    },
+    "speedup": 1.6770290229958138,
+    "reusedPages": [
+      null,
+      null
+    ],
+    "seedCloneMs": null,
+    "retainedCloneMs": null,
+    "matches": true
+  }
+]

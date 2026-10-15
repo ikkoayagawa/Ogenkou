@@ -1,0 +1,7 @@
+/.recovery/
+/extension/dist/
+/extension/artifacts/
+node_modules/
+*.log
+.env
+.env.*

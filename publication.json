@@ -1,0 +1,52 @@
+{
+  "include": [
+    ".gitattributes",
+    ".gitmodules",
+    ".vscode",
+    "LICENSE",
+    "README.md",
+    "DESIGN.md",
+    "core-revision.json",
+    "publication.json",
+    "scripts/export-publication.mjs",
+    "extension/extension.cjs",
+    "extension/package.json",
+    "extension/package-lock.json",
+    "extension/tsconfig.json",
+    "extension/LICENSE",
+    "extension/README.md",
+    "extension/SOURCE_CODE.md",
+    "extension/THIRD_PARTY_NOTICES.md",
+    "extension/schemas",
+    "extension/syntaxes",
+    "extension/src",
+    "extension/scripts",
+    "extension/test",
+    "extension/test-host",
+    "experiments/preview-benchmark/README.md",
+    "experiments/preview-benchmark/package.json",
+    "experiments/preview-benchmark/package-lock.json",
+    "experiments/preview-benchmark/build-upstream-comparison.mjs",
+    "experiments/preview-benchmark/run-upstream-comparison.mjs",
+    "experiments/preview-benchmark/run-scaling-comparison.mjs",
+    "experiments/preview-benchmark/run-scaling-focused.mjs",
+    "experiments/preview-benchmark/run-initial-only.mjs",
+    "experiments/preview-benchmark/upstream-comparison-browser.mjs",
+    "experiments/preview-benchmark/publish-upstream-comparison.mjs",
+    "experiments/preview-benchmark/publish-scaling-comparison.py",
+    "experiments/preview-benchmark/本家比較ベンチマーク.md",
+    "experiments/preview-benchmark/本家比較結果.md",
+    "experiments/preview-benchmark/本家比較結果.json",
+    "experiments/preview-benchmark/scaling-20261014",
+    "experiments/preview-benchmark/records"
+  ],
+  "core": {
+    "path": "vivliostyle",
+    "url": "https://github.com/ikkoayagawa/vivliostyle.js.git",
+    "revision": "98f72cf9655d50c3b21662b47907f83608b34d94"
+  },
+  "exclude": [
+    "extension/scripts/compare-compilers.mjs",
+    "extension/scripts/probe-vfm-options.mjs"
+  ]
+}

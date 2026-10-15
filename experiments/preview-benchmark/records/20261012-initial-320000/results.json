@@ -1,0 +1,146 @@
+{
+  "groups": [
+    {
+      "size": 320000,
+      "position": null,
+      "scenario": "initial",
+      "trial": -1,
+      "warmup": true,
+      "order": [
+        "upstream/initial",
+        "current/initial"
+      ],
+      "matches": true
+    },
+    {
+      "size": 320000,
+      "position": null,
+      "scenario": "initial",
+      "trial": 0,
+      "warmup": false,
+      "order": [
+        "current/initial",
+        "upstream/initial"
+      ],
+      "matches": true
+    },
+    {
+      "size": 320000,
+      "position": null,
+      "scenario": "initial",
+      "trial": 1,
+      "warmup": false,
+      "order": [
+        "upstream/initial",
+        "current/initial"
+      ],
+      "matches": true
+    }
+  ],
+  "rows": [
+    {
+      "size": 320000,
+      "position": "middle",
+      "trial": 0,
+      "build": "current",
+      "mode": "initial",
+      "durationMs": 18807,
+      "seedPrepareMs": 0,
+      "retainMs": null,
+      "baselineMs": null,
+      "targetIndex": null,
+      "pageCount": 534,
+      "terminal": {
+        "revision": 1
+      },
+      "paperHash": "7b9e27a7143a77ba3b5e11cc39875ab90b70efdf1b4485c45e0faab424824693",
+      "matches": true
+    },
+    {
+      "size": 320000,
+      "position": "middle",
+      "trial": 0,
+      "build": "upstream",
+      "mode": "initial",
+      "durationMs": 31549.099999964237,
+      "seedPrepareMs": 0,
+      "retainMs": null,
+      "baselineMs": null,
+      "targetIndex": null,
+      "pageCount": 534,
+      "terminal": {},
+      "paperHash": "7b9e27a7143a77ba3b5e11cc39875ab90b70efdf1b4485c45e0faab424824693",
+      "matches": true
+    },
+    {
+      "size": 320000,
+      "position": "middle",
+      "trial": 1,
+      "build": "upstream",
+      "mode": "initial",
+      "durationMs": 31012.299999952316,
+      "seedPrepareMs": 0,
+      "retainMs": null,
+      "baselineMs": null,
+      "targetIndex": null,
+      "pageCount": 534,
+      "terminal": {},
+      "paperHash": "7b9e27a7143a77ba3b5e11cc39875ab90b70efdf1b4485c45e0faab424824693",
+      "matches": true
+    },
+    {
+      "size": 320000,
+      "position": "middle",
+      "trial": 1,
+      "build": "current",
+      "mode": "initial",
+      "durationMs": 18497.899999976158,
+      "seedPrepareMs": 0,
+      "retainMs": null,
+      "baselineMs": null,
+      "targetIndex": null,
+      "pageCount": 534,
+      "terminal": {
+        "revision": 1
+      },
+      "paperHash": "7b9e27a7143a77ba3b5e11cc39875ab90b70efdf1b4485c45e0faab424824693",
+      "matches": true
+    }
+  ],
+  "warmups": [
+    {
+      "size": 320000,
+      "position": "middle",
+      "trial": -1,
+      "build": "upstream",
+      "mode": "initial",
+      "durationMs": 40974.69999998808,
+      "seedPrepareMs": 0,
+      "retainMs": null,
+      "baselineMs": null,
+      "targetIndex": null,
+      "pageCount": 534,
+      "terminal": {},
+      "paperHash": "7b9e27a7143a77ba3b5e11cc39875ab90b70efdf1b4485c45e0faab424824693",
+      "matches": true
+    },
+    {
+      "size": 320000,
+      "position": "middle",
+      "trial": -1,
+      "build": "current",
+      "mode": "initial",
+      "durationMs": 18455.399999976158,
+      "seedPrepareMs": 0,
+      "retainMs": null,
+      "baselineMs": null,
+      "targetIndex": null,
+      "pageCount": 534,
+      "terminal": {
+        "revision": 1
+      },
+      "paperHash": "7b9e27a7143a77ba3b5e11cc39875ab90b70efdf1b4485c45e0faab424824693",
+      "matches": true
+    }
+  ]
+}

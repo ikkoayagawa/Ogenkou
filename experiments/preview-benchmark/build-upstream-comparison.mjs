@@ -1,0 +1,26 @@
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {execFileSync} from 'node:child_process';
+import {createRequire} from 'node:module';
+import {createHash} from 'node:crypto';
+
+const root=path.resolve(import.meta.dirname,'../..'),repo=path.join(root,'vivliostyle');
+const require=createRequire(path.join(import.meta.dirname,'package.json')),{build}=require('esbuild');
+const args=Object.fromEntries(process.argv.slice(2).map(v=>v.replace(/^--/,'').split('=')));
+const revision=execFileSync('git',['-C',repo,'rev-parse',args.ref??'13d0a9c4'],{encoding:'utf8'}).trim();
+const output=path.resolve(args.output??path.join(root,'.recovery/upstream-comparison/build',revision));
+await fs.mkdir(output,{recursive:true});
+const archive=path.join(output,'source.tar'),source=path.join(output,'source');
+await fs.mkdir(source,{recursive:true});
+execFileSync('git',['-C',repo,'archive','--format=tar','--output',archive,revision,'packages/core']);
+execFileSync('tar',['-xf',archive,'-C',source]);
+const core=path.join(source,'packages/core'),pkg=JSON.parse(await fs.readFile(path.join(core,'package.json'),'utf8'));
+if(pkg.name!=='@vivliostyle/core')throw Error('Reference is a fork, not upstream Core');
+const bundle=path.join(output,'core.js');
+const built=await build({entryPoints:[path.join(core,'src/vivliostyle.ts')],outfile:bundle,bundle:true,format:'iife',globalName:'VivliostyleCore',define:{VIVLIOSTYLE_DEBUG:'false'},minify:true,target:'es2022',platform:'browser',metafile:true,nodePaths:[path.join(repo,'packages/core/node_modules'),path.join(repo,'node_modules')]});
+const inputs=Object.keys(built.metafile.inputs).map(p=>path.resolve(p));
+if(inputs.some(p=>p.startsWith(path.join(repo,'packages/core/src')+path.sep)))throw Error('Upstream bundle included live fork source');
+await fs.writeFile(path.join(output,'metafile.json'),JSON.stringify(built.metafile,null,2)+'\n');
+const metadata={revision,version:pkg.version,package:pkg.name,bundle,resources:path.join(core,'resources'),source,build:{target:'es2022',minify:true,debug:false},sha256:createHash('sha256').update(await fs.readFile(bundle)).digest('hex')};
+await fs.writeFile(path.join(output,'build.json'),JSON.stringify(metadata,null,2)+'\n');
+console.log(JSON.stringify(metadata));

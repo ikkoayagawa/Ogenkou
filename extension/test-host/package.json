@@ -1,0 +1,5 @@
+{
+  "name": "ogenkou-foundation-test-host", "publisher": "local-tests", "version": "0.0.1",
+  "private": true, "engines": { "vscode": "^1.100.0" }, "main": "extension.cjs",
+  "activationEvents": ["onStartupFinished"]
+}
