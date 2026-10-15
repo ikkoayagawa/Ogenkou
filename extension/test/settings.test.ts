@@ -21,8 +21,7 @@ function setup(text = editProjectPublication("{}", publicationValues(BUILTIN_PUB
   service.activate("work", uri); return { documents, prefs, service };
 }
 test("example title alias, conflicts and publication fields roundtrip", async () => {
-  const text = await readFile(new URL("../../../ogenkou.jsonc", import.meta.url), "utf8").catch(() =>
-    readFile("../ogenkou.jsonc", "utf8"));
+  const text = await readFile(new URL("../../test/data/project-settings.json", import.meta.url), "utf8");
   assert.equal(parseProjectConfig(text).title, "ベンチマーク32万字");
   assert.throws(() => parseProjectConfig('{"title":"A","publication":{"title":"B"}}'), /異なります/u);
   const values = publicationValues(BUILTIN_PUBLICATION);

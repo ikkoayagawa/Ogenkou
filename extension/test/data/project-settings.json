@@ -1,0 +1,61 @@
+{
+  "overrides": {
+    "writingMode": "vertical",
+    "layout": {
+      "pageSize": "A5",
+      "pageMargin": "auto",
+      "fontFamily": [
+        "Noto Serif CJK JP",
+        "Yu Mincho",
+        "serif"
+      ],
+      "fontSize": "9pt",
+      "lineHeight": 1.75,
+      "charactersPerLine": 40,
+      "linesPerPage": 16,
+      "paragraphIndent": "source",
+      "runningHead": true,
+      "pageNumber": true,
+      "furnitureMode": "custom",
+      "topFontFamily": [
+        "Yu Mincho",
+        "serif"
+      ],
+      "topFontSize": "7pt",
+      "topDistance": 3,
+      "topLeftAlign": "left",
+      "topLeftText": "$page$　$h1$",
+      "topRightAlign": "right",
+      "topRightText": "$page$",
+      "bottomFontFamily": [
+        "Yu Mincho",
+        "serif"
+      ],
+      "bottomFontSize": "7pt",
+      "bottomDistance": 3,
+      "bottomLeftAlign": "none",
+      "bottomLeftText": "$page$",
+      "bottomRightAlign": "none",
+      "bottomRightText": "$page$",
+      "columnCount": 1
+    },
+    "processing": {
+      "hardLineBreaks": true,
+      "preserveEmptyLines": true,
+      "preserveLineIndent": true,
+      "pipeAngleRuby": true,
+      "bareKanjiRuby": true,
+      "bracketRuby": true,
+      "doubleAngleEmphasis": true,
+      "bracketEmphasis": true,
+      "emphasisMark": "﹅",
+      "connectedDashes": true,
+      "verticalQuotes": true,
+      "automaticTcy": true,
+      "kanaMarks": true
+    }
+  },
+  "settingsVersion": 1,
+  "title": "ベンチマーク32万字",
+  "style": "styles/custom.css"
+}
