@@ -29,7 +29,7 @@ npm run build --prefix extension
 
 ## 公開用ファイルの生成
 
-`publication.json` に公開対象を指定しています。開発用checkoutで `node scripts/export-publication.mjs` を実行すると一覧とCoreの参照を検査します。`--write --target=空の出力先` を付けると公開対象だけをコピーします。公開用の更新時は、生成結果と既存の公開用checkoutの差分を確認し、Coreの参照先と一緒にコミットします。
+`publication.json` に公開対象を指定しています。`node scripts/export-publication.mjs` で公開対象とCore参照を検査し、`--write --target=空の出力先` を付けると公開対象だけを生成します。
 
 ## ライセンス
 
