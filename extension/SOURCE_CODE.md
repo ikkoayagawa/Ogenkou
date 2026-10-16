@@ -17,4 +17,4 @@ npm run build
 
 Core側のREADME／package.jsonにあるビルド手順とNode.js要件も参照してください。開発用リポジトリではCoreをsubmoduleとして取得します。ブラウザは既存Chrome／Edge／Chromiumを使用します。
 
-配布・ネットワーク提供時も、改変版に対応するソースとライセンス通知を提供してください。本VSIXはローカル検証用で、Marketplaceへの公開は行っていません。
+配布・ネットワーク提供時も、改変版に対応するソースとライセンス通知を提供してください。Marketplace向けのVSIXにも、上記の対応ソースを同梱します。

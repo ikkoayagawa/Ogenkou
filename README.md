@@ -14,7 +14,7 @@
 - 文字数の表示、Gitの最新コミットからの増減、正規表現によるハイライト。
 - プレビューと同じ原稿・設定・CSSを使ったPDF出力。
 
-インストールと操作方法は **[拡張機能の説明](extension/README.md)** にまとめています。0.9.0はVSIXからインストールできます。PDF出力には、PCにインストール済みのChrome・Edge・Chromiumのいずれかを使います。
+インストールと操作方法は **[拡張機能の説明](extension/README.md)** にまとめています。[Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=IkkoAyagawa.ogenkou) からインストールできます。PDF出力には、PCにインストール済みのChrome・Edge・Chromiumのいずれかを使います。
 
 ## まず試す
 
@@ -58,7 +58,7 @@ npm ci --prefix extension
 npm run package --prefix extension
 ```
 
-0.9.0の出力先は `extension/artifacts/ogenkou-0.9.0.vsix` です。VS Codeの拡張機能画面から「VSIXからのインストール」で選びます。
+0.9.1の出力先は `extension/artifacts/ogenkou-0.9.1.vsix` です。VS Codeの拡張機能画面から「VSIXからのインストール」で選びます。
 
 開発時は `npm run build --prefix extension` の後、F5で `Run Ogenkou` を起動できます。このデバッグ起動では他のインストール済み拡張機能を無効にします。Coreの自動ビルドには `npm run dev --prefix vivliostyle/packages/core` を使えます。
 

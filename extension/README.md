@@ -4,7 +4,7 @@
 
 縦書きの行の収まり、ページをまたぐ台詞、章の始まり。文章だけでは気づきにくいところを、原稿の隣に開いたプレビューで確かめられます。紙面を整えたら、作品全体をPDFに書き出せます。
 
-![原稿を編集しながら紙面を確認する様子](media/preview.gif)
+![原稿を編集しながら紙面を確認する様子](https://raw.githubusercontent.com/ikkoayagawa/Ogenkou/main/extension/media/preview.gif)
 
 ## 主な機能
 
@@ -18,11 +18,19 @@
 
 ## インストール
 
-0.9.0はVSIXファイルからインストールします。
+[Visual Studio MarketplaceのOgenkouページ](https://marketplace.visualstudio.com/items?itemName=IkkoAyagawa.ogenkou) からインストールできます。
 
 1. VS Codeで「拡張機能」を開きます。
-2. 上部の「…」から「VSIXからのインストール」を選びます。
-3. 配布された `ogenkou-0.9.0.vsix` を選びます。再読み込みを求められたら、案内に従ってください。
+2. 検索欄に `@id:IkkoAyagawa.ogenkou` と入力します。
+3. Ogenkouの「インストール」を押します。発行者が **IkkoAyagawa** であることを確認してください。
+
+コマンドから導入する場合は、次を実行します。
+
+```console
+code --install-extension IkkoAyagawa.ogenkou
+```
+
+VSIXファイルを使う場合は、拡張機能画面の「…」→「VSIXからのインストール」で入手したファイルを指定できます。
 
 ソースから作成する場合の手順は [リポジトリのREADME](https://github.com/ikkoayagawa/Ogenkou#readme) にあります。インストール後にNode.jsやVivliostyleを別途導入する必要はありません。
 
@@ -88,7 +96,7 @@ VS Codeで作品用のフォルダーを開き、`01_第一章.novel` のよう�
 | 柱・ノンブルの設定 | 柱とページ番号の位置・表記、柱の見出しの長さ |
 | 組版処理 | 改行・字下げ、ルビ・傍点、縦中横、連続ダッシュなど |
 
-![作品情報の設定画面](media/work-information.png)
+![作品情報の設定画面](https://raw.githubusercontent.com/ikkoayagawa/Ogenkou/main/extension/media/work-information.png)
 
 変更後に「適用」を押すと、設定に合わせて組み直します。既存の `ogenkou.jsonc` を変更した場合は、VS Code上でも保存してください。未適用の変更がある間は編集対象を切り替えられません。「未適用の変更を破棄」で元へ戻せます。
 
