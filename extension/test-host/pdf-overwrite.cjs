@@ -1,7 +1,7 @@
 const vscode=require('vscode'),fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
 exports.run=async()=>{
  const workspace=process.env.OGENKOU_ENTRY_WORKSPACE,output=process.env.OGENKOU_ENTRY_RESULT,checks=[];
- const api=await vscode.extensions.getExtension('ogenkou-local.ogenkou').activate();
+ const api=await vscode.extensions.getExtension('IkkoAyagawa.ogenkou').activate();
  const source=vscode.Uri.file(path.join(workspace,'first/01.novel'));
  await vscode.commands.executeCommand('ogenkou.preview.open',source);
  const deadline=Date.now()+30000;

@@ -1,6 +1,6 @@
 const vscode=require('vscode'),fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
 exports.run=async()=>{
- const api=await vscode.extensions.getExtension('ogenkou-local.ogenkou').activate(),checks=[];
+ const api=await vscode.extensions.getExtension('IkkoAyagawa.ogenkou').activate(),checks=[];
  const until=async predicate=>{const end=Date.now()+120000;while(Date.now()<end){const state=api.diagnostics();const failed=state?.events.find(e=>e.type==='failure'||e.type==='input-failure');assert(!failed,JSON.stringify(failed));if(predicate(state))return;await new Promise(r=>setTimeout(r,50))}throw Error('Fallback timeout: '+JSON.stringify(api.diagnostics()))};
  const uri=vscode.Uri.file(path.join(process.env.OGENKOU_ENTRY_WORKSPACE,'fallback/01.novel')),doc=await vscode.workspace.openTextDocument(uri);
  await vscode.window.showTextDocument(doc);await vscode.commands.executeCommand('ogenkou.preview.open',uri);

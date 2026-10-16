@@ -3,7 +3,7 @@ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 exports.run=async()=>{
  const workspace=process.env.OGENKOU_ENTRY_WORKSPACE,output=process.env.OGENKOU_ENTRY_RESULT;
  const benchmark=process.env.OGENKOU_ENTRY_BENCHMARK==='1',spreadBenchmark=process.env.OGENKOU_ENTRY_SPREAD_BENCHMARK==='1';if(spreadBenchmark)await vscode.workspace.getConfiguration('ogenkou').update('preview.mode','spread',vscode.ConfigurationTarget.Workspace);
- const extension=vscode.extensions.getExtension('ogenkou-local.ogenkou');assert(extension,'Production extension discovered');
+ const extension=vscode.extensions.getExtension('IkkoAyagawa.ogenkou');assert(extension,'Production extension discovered');
  const api=await extension.activate(),checks=[],measurements=[];
  const until=async(predicate,label)=>{const end=Date.now()+120000;while(Date.now()<end){const failed=api.diagnostics()?.events.find(e=>e.type==='input-failure'||e.type==='failure');if(failed)throw Error(JSON.stringify(failed));if(predicate()){checks.push(label);await fs.writeFile(output+'.progress',JSON.stringify({checks,diagnostics:api.diagnostics()},null,2));return;}await fs.writeFile(output+'.progress',JSON.stringify({checks,diagnostics:api.diagnostics()},null,2));await pause(50)}throw Error('Timeout: '+label+' '+JSON.stringify(api.diagnostics()));};
  async function burst(uri){

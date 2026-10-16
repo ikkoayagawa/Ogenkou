@@ -2,7 +2,7 @@ const vscode=require('vscode'),fs=require('node:fs/promises'),path=require('node
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 exports.run=async()=>{
  const workspace=process.env.OGENKOU_ENTRY_WORKSPACE,output=process.env.OGENKOU_ENTRY_RESULT,checks=[];
- const api=await vscode.extensions.getExtension('ogenkou-local.ogenkou').activate();
+ const api=await vscode.extensions.getExtension('IkkoAyagawa.ogenkou').activate();
  const events=()=>api.diagnostics()?.events??[];
  async function until(predicate,label){const deadline=Date.now()+120000;while(Date.now()<deadline){const error=events().find(e=>e.type==='failure'||e.type==='input-failure');if(error)throw Error(JSON.stringify(error));if(predicate()){checks.push(label);return;}await pause(40);}throw Error('Timeout: '+label);}
  async function inspect(){const count=events().filter(e=>e.type==='ui-state').length;await api.uiAction('inspect');await until(()=>events().filter(e=>e.type==='ui-state').length>count,'UI snapshot received');return events().filter(e=>e.type==='ui-state').at(-1);}

@@ -2,7 +2,7 @@ const vscode=require('vscode'),fs=require('node:fs/promises'),path=require('node
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 exports.run=async()=>{
  const workspace=process.env.OGENKOU_ENTRY_WORKSPACE,output=process.env.OGENKOU_ENTRY_RESULT,checks=[],cases=[];
- const api=await vscode.extensions.getExtension('ogenkou-local.ogenkou').activate();
+ const api=await vscode.extensions.getExtension('IkkoAyagawa.ogenkou').activate();
  const events=()=>api.diagnostics()?.events??[];
  async function until(predicate,label){const deadline=Date.now()+120000;while(Date.now()<deadline){const error=events().find(e=>e.type==='failure'||e.type==='input-failure');if(error)throw Error(JSON.stringify(error));if(predicate()){checks.push(label);return;}await pause(40);}await fs.writeFile(output,JSON.stringify({checks,events:events()},null,2));throw Error('Timeout: '+label);}
  async function inspect(){const n=events().filter(e=>e.type==='paper-layout').length;await api.uiAction('layout-inspect');await until(()=>events().filter(e=>e.type==='paper-layout').length>n,'layout inspected');return events().filter(e=>e.type==='paper-layout').at(-1);}

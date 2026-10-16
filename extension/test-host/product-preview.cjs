@@ -2,7 +2,7 @@ const vscode=require('vscode'),fs=require('node:fs/promises'),path=require('node
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 exports.run=async()=>{
  const workspace=process.env.OGENKOU_ENTRY_WORKSPACE,output=process.env.OGENKOU_ENTRY_RESULT,checks=[];
- const extension=vscode.extensions.getExtension('ogenkou-local.ogenkou'),api=await extension.activate();
+ const extension=vscode.extensions.getExtension('IkkoAyagawa.ogenkou'),api=await extension.activate();
  const until=async(predicate,label)=>{const end=Date.now()+120000;while(Date.now()<end){const events=api.diagnostics()?.events??[],error=events.find(e=>e.type==='failure'||e.type==='input-failure');if(error)throw Error(JSON.stringify(error));if(predicate()){checks.push(label);return;}await fs.writeFile(output+'.progress',JSON.stringify({checks,diagnostics:api.diagnostics()},null,2));await pause(50);}throw Error('Timeout '+label);};
  const uri=vscode.Uri.file(path.join(workspace,'first/01.novel')),doc=await vscode.workspace.openTextDocument(uri);await vscode.window.showTextDocument(doc,{viewColumn:vscode.ViewColumn.One});
  await vscode.commands.executeCommand('ogenkou.preview.open',uri);await until(()=>api.diagnostics()?.events.some(e=>e.type==='display'),'initial completed paper');
