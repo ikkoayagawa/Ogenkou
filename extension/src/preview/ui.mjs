@@ -61,7 +61,12 @@ export function settingsUI(api,state,saveState){
  function heading(root,title){const h=document.createElement('h3');h.className='settings-section';h.textContent=title;root.append(h);}
  function render(){fields.replaceChildren();target.disabled=pending;$('settings-discard').disabled=pending;$('settings-freeze').hidden=!view?.legacy;if(!view){dirty();return;}
   $('settings-location').textContent=target.value==='project'?'作品設定：ogenkou.jsonc':'共通デフォルト：変更しても既存作品には影響しません';
-  tabBar();const publication=section('publication','作品情報');if(target.value==='project'){control('publication.title',publication);control('publication.author',publication);}else help(publication,'タイトル・著者は編集対象を「この作品」にして設定します。');heading(publication,'タイトルページ');control('processing.titlePage',publication);heading(publication,'目次');for(const key of ['processing.toc','processing.tocDepth','processing.tocWritingMode','processing.tocLineHeight'])control(key,publication);
+  tabBar();const publication=section('publication','作品情報');if(target.value==='project'){
+    control('publication.title',publication);control('publication.author',publication);
+    const button=document.createElement('button');button.type='button';button.id='add-colophon';button.textContent='奥付を追加';button.disabled=pending||initialBusy;
+    button.onclick=()=>{if(Object.keys(changes).length){message.textContent='先に未適用の変更を適用するか、破棄してください。';return;}api.postMessage({type:'add-colophon'});};
+    publication.append(button);help(publication,'99_okuduke.yamlを作成して開きます。項目や注意書きは自由に編集できます。');
+  }else help(publication,'タイトル・著者は編集対象を「この作品」にして設定します。');heading(publication,'タイトルページ');control('processing.titlePage',publication);heading(publication,'目次');for(const key of ['processing.toc','processing.tocDepth','processing.tocWritingMode','processing.tocLineHeight'])control(key,publication);
   const layout=section('layout','紙面のレイアウト');paper(layout);control('writingMode',layout);pair(layout,[['layout.columnCount','段数'],...(Number(values()['layout.columnCount'])>1?[['layout.columnGap','段間隔（mm）']]:[])]);help(layout,'縦書きの段は上下、横書きの段は左右に並びます。');pair(layout,[['layout.fontSize','文字サイズ（pt）'],['layout.lineHeight','行送り（倍率）']]);pair(layout,[['layout.charactersPerLine','一段の一行の文字数'],['layout.linesPerPage','一段の行数']]);control('layout.fontFamily',layout);margins(layout);layout.append(review);
   const furniture=section('furniture','柱・ノンブルの設定');help(furniture,'$page$：ページ番号、$title$：作品タイトル、$h1$〜$h5$：そのページの最初の見出し（なければ前ページから継承）に置換します。見出しの最大文字数には「…」を含みます。空欄なら省略しません。');
   control('layout.runningHeadMaxLength',furniture);

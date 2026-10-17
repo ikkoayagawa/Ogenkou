@@ -17,6 +17,8 @@ import {calculateLayoutGeometry} from "./config/layout-geometry.js";
 import {decodePaperSize,PAPER_PRESETS} from "./config/paper-size.js";
 import {findBrowser,renderPdf} from "./services/pdf-export.js";
 import {registerEditorSupport} from "./host/editor-support.js";
+import {createColophon} from './services/create-colophon.js';
+import {isWorkSource} from './compiler/colophon.js';
 
 class PreviewSession {
   #server: RuntimeServer;
@@ -85,6 +87,7 @@ class PreviewSession {
         if(value.type==="request-target")void this.#navigationTarget(value as any);
         if(value.type==="view-preferences"){const tab=(value as any).settingsTab;if(["publication","layout","furniture","processing"].includes(tab))void this.context.workspaceState.update("preview:"+root.toString(),{...this.context.workspaceState.get<Record<string,unknown>>("preview:"+root.toString(),{}),settingsTab:tab});}
         if(value.type==="pdf")void this.exportPdf().catch(()=>{});
+        if(value.type==="add-colophon")void this.addColophon().catch(error=>vscode.window.showErrorMessage('Ogenkou: '+String(error)));
         if(value.type==="view-state"||value.type==="click-diagnostic"){
           this.events.push({...value,type:value.type,at:Date.now()});
           if(value.type==="view-state"){const v=value as any,state={...this.context.workspaceState.get<Record<string,unknown>>("preview:"+root.toString(),{}),mode:v.mode,zoomSetting:v.zoomSetting,fit:v.fit,page:v.page},serialized=JSON.stringify(state);if(serialized!==this.#lastViewState){this.#lastViewState=serialized;void this.context.workspaceState.update("preview:"+root.toString(),state);}}
@@ -105,7 +108,7 @@ class PreviewSession {
       const belongs=(uri: vscode.Uri)=>uri.scheme==="file"&&uri.fsPath.toLowerCase().startsWith(root.fsPath.toLowerCase()+path.sep);
       const watcher=vscode.workspace.createFileSystemWatcher(new vscode.RelativePattern(root,"**/*"));
       this.#subscriptions.push(watcher,vscode.workspace.onDidChangeTextDocument(event=>{if(event.contentChanges.length&&belongs(event.document.uri)){
-          if(/\.(?:novel|nv)$/iu.test(event.document.uri.path)){
+          if(isWorkSource(event.document.uri.toString())){
             this.#history.record(event.document.uri.toString(),event.document.version,event.contentChanges.map(c=>({start:c.rangeOffset,end:c.rangeOffset+c.rangeLength,text:c.text})));
             const change=event.contentChanges[0]!;this.#position={uri:event.document.uri.toString(),offset:change.rangeOffset+change.text.length};
             const edit={...this.#position,at:Date.now()};this.#positions.set(this.#position.uri+":"+event.document.version,edit);
@@ -113,19 +116,37 @@ class PreviewSession {
             void panel.webview.postMessage({type:"raw-edit",at:edit.at});this.events.push({type:"edit",at:edit.at,version:event.document.version});
           }else if(event.document.uri.toString()===config.toString())void panel.webview.postMessage({type:"settings-invalidated"});this.refresh();}}),
         watcher.onDidCreate(()=>this.refresh()),watcher.onDidChange(()=>this.refresh()),watcher.onDidDelete(()=>this.refresh()),
-        vscode.window.onDidChangeTextEditorSelection(event=>{if(vscode.workspace.getConfiguration("ogenkou").get("preview.followCursor",false)&&belongs(event.textEditor.document.uri)&&/\.(novel|nv)$/iu.test(event.textEditor.document.uri.path)){
+        vscode.window.onDidChangeTextEditorSelection(event=>{if(vscode.workspace.getConfiguration("ogenkou").get("preview.followCursor",false)&&belongs(event.textEditor.document.uri)&&isWorkSource(event.textEditor.document.uri.toString())){
           this.#position={uri:event.textEditor.document.uri.toString(),offset:event.textEditor.document.offsetAt(event.selections[0]!.active),at:Date.now()};void panel.webview.postMessage({type:"source-focus"});this.refresh(true);}}));
     }catch(error){await this.close();throw error;}
   }
   reveal(): void {this.#panel?.reveal(vscode.ViewColumn.Beside,true);}
-  refresh(force=false): void {if(this.#closed||!force&&!vscode.workspace.getConfiguration("ogenkou").get("preview.autoUpdate",true))return;if(force)this.#sentRevision=undefined;this.#dirty=true;void this.#drive();}
+  #addingColophon?:Promise<void>;
+  addColophon():Promise<void>{
+    if(this.#addingColophon)return this.#addingColophon;
+    this.#addingColophon=(async()=>{
+      const root=vscode.Uri.joinPath(this.manuscript,'..');
+      const result=await createColophon(this.#workspace,new URL('.',this.manuscript.toString()).href,async uri=>{await vscode.workspace.fs.createDirectory(vscode.Uri.parse(uri));},this.#abort.signal);
+      if(result.config&&result.saveConfig){
+        const config=await vscode.workspace.openTextDocument(vscode.Uri.parse(result.config.uri));
+        if(config.getText()===result.config.text&&String(config.version)===result.config.version)await config.save();
+      }
+      const document=await vscode.workspace.openTextDocument(vscode.Uri.parse(result.document.uri));
+      await vscode.window.showTextDocument(document,{viewColumn:vscode.ViewColumn.One,preview:false});
+      this.#position={uri:document.uri.toString(),offset:0,at:Date.now()};this.refresh(true);
+    })().catch(error=>{this.events.push({type:'colophon-error',message:String(error),at:Date.now()});throw error;}).finally(()=>{this.#addingColophon=undefined;this.refresh(true);});
+    return this.#addingColophon;
+  }
+  refresh(force=false): void {if(this.#closed||!force&&!vscode.workspace.getConfiguration("ogenkou").get("preview.autoUpdate",true))return;if(force)this.#sentRevision=undefined;this.#dirty=true;if(!this.#addingColophon)void this.#drive();}
   async #drive(): Promise<void> {
     if(this.#closed||this.#busy||!this.#panel||!this.#rendererReady)return;this.#busy=true;
     try {
       while(this.#dirty&&!this.#closed){
+        if(this.#addingColophon)return;
         this.#dirty=false;
         try {
           const input=await this.#input.build({signal:this.#abort.signal});if(this.#closed)return;
+          if(this.#addingColophon){this.#dirty=true;continue;}
           if(input.document.revision===this.#sentRevision)continue;
           const captured=input.snapshot.sources.map(part=>this.#positions.get(part.uri+":"+part.editorVersion)).filter(item=>item!==undefined).sort((a,b)=>b.at-a.at)[0];
           const source=previewInput(input,this.#position.at!==undefined&&this.#position.at>(captured?.at??0)?this.#position:captured??this.#position);
@@ -135,7 +156,7 @@ class PreviewSession {
           for(const revision of [...this.#renders.keys()].slice(0,-32))if(!retained.has(revision))this.#renders.delete(revision);
           const at=Date.now();this.events.push({type:"input",revision:source.revision,at,receivedAt:captured?.at,portable:source.portable,fragment:source.fragment});
           if(await this.#panel.webview.postMessage({type:"input",epoch:1,request:++this.#serial,source,receivedAt:captured?.at??at}))this.#sentRevision=input.document.revision;
-        }catch(error){if(this.#closed)return;const message=error instanceof Error?error.message:String(error);
+        }catch(error){if(this.#closed)return;if(this.#addingColophon){this.#dirty=true;continue;}const message=error instanceof Error?error.message:String(error);
           this.events.push({type:"input-failure",message});await this.#panel.webview.postMessage({type:"status",message});
           void vscode.window.showErrorMessage("Ogenkou: "+message);
         }
@@ -212,7 +233,7 @@ export async function activate(context: vscode.ExtensionContext) {
   const open=async(uri?: vscode.Uri)=>{
     if(opening)await opening;
     const target=uri instanceof vscode.Uri?uri:vscode.window.activeTextEditor?.document.uri;
-    const selected=target?.scheme==="file"&&/\.(?:novel|nv)$/iu.test(target.path)?target:(await vscode.window.showOpenDialog({canSelectMany:false,filters:{"小説原稿":["novel","nv"]}}))?.[0];
+    const selected=target?.scheme==="file"&&isWorkSource(target.toString())?target:(await vscode.window.showOpenDialog({canSelectMany:false,filters:{"小説原稿・奥付":["novel","nv","yaml","yml"]}}))?.[0];
     if(!selected)return;
     if(session?.manuscript.toString()===selected.toString()){session.reveal();return;}
     opening=(async()=>{await session?.close();const next=new PreviewSession(context,selected,()=>{if(session===next)session=undefined;});session=next;await next.open();})();
@@ -223,6 +244,7 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("ogenkou.preview.restart",async()=>{const target=session?.manuscript;if(target){await session?.close();await open(target);}}),
     vscode.commands.registerCommand("ogenkou.preview.close",()=>session?.close()));
   context.subscriptions.push(vscode.commands.registerCommand("ogenkou.pdf.export",async()=>{if(!session)await open();await session?.exportPdf();}));
+  context.subscriptions.push(vscode.commands.registerCommand('ogenkou.colophon.add',async()=>{try{if(!session)await open();await session?.addColophon();}catch(error){void vscode.window.showErrorMessage('Ogenkou: '+String(error));}}));
   return {diagnostics:()=>session?.diagnostics,navigate:(page:number)=>session?.navigate(page),validate:()=>session?.validate(),viewOptions:(options:{mode?:string;zoom?:number})=>session?.viewOptions(options),testClick:()=>session?.testClick(),uiAction:(action:string,data:Record<string,unknown>)=>session?.uiAction(action,data),exportPdf:(uri:vscode.Uri)=>session?.exportPdf(uri)};
 }
 export async function deactivate(){await session?.close();}

@@ -10,6 +10,7 @@ import type { WorkSnapshot } from "../services/snapshot-builder.js";
 import type { CompiledDocument, TextMapping, MappingRun, Heading } from "./manuscript.js";
 import { createPublicationCss } from "./publication-css.js";
 import { applyNotationToText, applyVerticalTypographyToText } from "./legacy-japanese.js";
+import {isYamlSource,parseColophon,type ColophonText} from './colophon.js';
 
 // The VFM/unified and HTML parser boundaries use their external tree shapes.
 type Tree = { type: string; value?: string; tagName?: string; properties?: Record<string, any>; children?: Tree[];
@@ -123,6 +124,22 @@ export function compileVfmManuscript(snapshot: WorkSnapshot, onTiming?: (phase: 
   const roots: Tree[] = [];
   for (const source of snapshot.sources) {
     const uri = source.uri, input = source.text, prefix = createHash("sha256").update(uri).digest("hex").slice(0,16);
+    if(isYamlSource(uri)) {
+      let colophon;
+      try{colophon=parseColophon(input);}catch(error){throw new Error(decodeURIComponent(new URL(uri).pathname.split('/').at(-1)!)+': '+(error as Error).message);}
+      if(!colophon)continue;
+      const text=(field:ColophonText):Tree=>field.value?mapped(make(uri,field.value,[{generatedStart:0,generatedEnd:field.value.length,sourceStart:field.start,sourceEnd:field.end,mode:'range'}])):{type:'text',value:''};
+      const content=(field:ColophonText)=>/^(?:https?:\/\/|mailto:)[^\s]+$/u.test(field.value)?el('a',[text(field)],{href:field.value}):text(field);
+      const children:Tree[]=[];
+      if(colophon.title?.value)children.push(el('h1',[text(colophon.title)]));
+      if(colophon.date?.value)children.push(el('p',[text(colophon.date)],{className:['edition']}));
+      if(colophon.items.length)children.push(el('dl',colophon.items.flatMap(item=>[el('dt',[text(item.name)]),el('dd',[content(item.content)])])));
+      if(colophon.rule)children.push(el('hr'));
+      if(colophon.notice?.value)children.push(el('p',[text(colophon.notice)],{className:['notice']}));
+      // Template headings are not novel chapters and must not enter the TOC.
+      roots.push({type:'root',children:[el('section',children,{className:['colophon'],id:'colophon-'+prefix})]});
+      continue;
+    }
     // Like old Ogenkou, preserve bracket ruby/emphasis as text instead of VFM shortcodes.
     function shortcodeAdapter(this: any, ...args: any[]) {
       const transform = (vfmToc as any).apply(this, args), parser = this.Parser?.prototype, original = parser?.blockTokenizers?.shortcode;

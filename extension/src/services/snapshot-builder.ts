@@ -4,6 +4,7 @@ import { BUILTIN_PUBLICATION, rawProjectPublication } from "../config/publicatio
 import { resolvePublicationSettings, type PublicationSettings } from "../config/publication-settings.js";
 import { immutable, request } from "./contracts.js";
 import type { ResourceCollection, ResourceManifest, ResourceReader } from "./resource-collector.js";
+import {isWorkSource,isYamlSource,parseColophon} from '../compiler/colophon.js';
 
 export interface OpenText { readonly uri: string; readonly text: string; readonly version: number; readonly dirty: boolean }
 export interface FileEntry { readonly uri: string; readonly directory: boolean }
@@ -53,7 +54,7 @@ export function naturalCompare(a: string, b: string): number {
 function rootOf(uri: string): string {
   const url = new URL(uri);
   if (url.protocol !== "file:") throw new Error("ローカルファイルの原稿を指定してください。");
-  if (!/\.(?:novel|nv)$/iu.test(decodeURIComponent(url.pathname))) throw new Error(".novel／.nv の原稿を指定してください。");
+  if (!isWorkSource(uri)) throw new Error(".novel／.nv、または奥付用の.yaml原稿を指定してください。");
   return new URL(".", url).href;
 }
 function identity(uri: string): string {
@@ -103,7 +104,7 @@ export class SnapshotBuilder {
           if (text) { const value = decoder.decode(file.bytes); textReads.set(identity(uri), { uri, text: value, buffered: false }); return value; }
           return file.bytes.slice();
         };
-        const isManuscript = (uri: string) => directChild(uri, active.root) && /\.(?:novel|nv)$/iu.test(decodeURIComponent(new URL(uri).pathname));
+        const isManuscript = (uri: string) => directChild(uri, active.root) && isWorkSource(uri);
         const unique = new Map(entries.filter(f => !f.directory && isManuscript(f.uri)).map(f => [identity(f.uri), f.uri]));
         for (const buffer of open.values()) if (isManuscript(buffer.uri) && !unique.has(identity(buffer.uri))) unique.set(identity(buffer.uri), buffer.uri);
         const uris = [...unique.values()].sort((a, b) => naturalCompare(decodeURIComponent(a), decodeURIComponent(b)));
@@ -114,8 +115,12 @@ export class SnapshotBuilder {
         const config = parseProjectConfig(configText);
         const rawSettings = rawProjectPublication(config.settingsVersion === 1 ? BUILTIN_PUBLICATION : active.defaults, configText);
         const settings = resolvePublicationSettings(rawSettings, {});
-        const parts = await Promise.all(uris.map(async uri => ({ uri, text: await read(uri, true) as string,
+        const candidates = await Promise.all(uris.map(async uri => ({ uri, text: await read(uri, true) as string,
           dirty: open.get(identity(uri))?.dirty ?? false, editorVersion: open.get(identity(uri))?.version })));
+        const parts=candidates.filter(part=>{
+          if(!isYamlSource(part.uri))return true;
+          try{return !!parseColophon(part.text);}catch(error){throw new Error(decodeURIComponent(new URL(part.uri).pathname.split('/').at(-1)!)+': '+String((error as Error).message));}
+        });
         let content = "";
         const sources: SourcePart[] = [], boundaries: { start: number; end: number }[] = [];
         for (const part of parts) {

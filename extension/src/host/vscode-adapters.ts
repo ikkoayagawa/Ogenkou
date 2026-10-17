@@ -20,7 +20,7 @@ export class VSCodeWorkspace implements DocumentStore, VSCode.Disposable {
     const bump = () => { this.#generation++; this.#contextGeneration++; };
     const textChange = (uri: VSCode.Uri) => {
       this.#generation++;
-      if (!/\.(?:novel|nv)$/iu.test(uri.path)) this.#contextGeneration++;
+      if (!/\.(?:novel|nv|yaml|yml)$/iu.test(uri.path)) this.#contextGeneration++;
     };
     this.#subscriptions = [api.workspace.onDidChangeTextDocument(e => textChange(e.document.uri)),
       api.workspace.onDidOpenTextDocument(d => textChange(d.uri)), api.workspace.onDidCloseTextDocument(d => textChange(d.uri)),
@@ -59,7 +59,15 @@ export class VSCodeWorkspace implements DocumentStore, VSCode.Disposable {
     return text.replace(/\r\n|\r|\n/gu, doc.eol === this.api.EndOfLine.CRLF ? "\r\n" : "\n");
   }
   async read(uri: string, signal: AbortSignal): Promise<TextRecord> {
-    this.#check(signal); const document = await this.api.workspace.openTextDocument(this.api.Uri.parse(uri));
+    this.#check(signal); const target=this.api.Uri.parse(uri);
+    let document:VSCode.TextDocument;
+    try{document=await this.api.workspace.openTextDocument(target);}
+    catch(error){
+      // openTextDocument may wrap missing-file errors without their code. The
+      // filesystem API preserves FileNotFound for optional generated files.
+      try{await this.api.workspace.fs.stat(target);}catch(statError){this.#check(signal);if((statError as {code?:string}).code==='FileNotFound')throw statError;}
+      throw error;
+    }
     this.#check(signal); return this.#record(document);
   }
   async create(uri: string, text: string, signal: AbortSignal): Promise<TextRecord> {

@@ -2,6 +2,7 @@ import { calculateLayoutGeometry } from "../config/layout-geometry.js";
 import { furnitureLayout, furnitureContent, cssString } from "../config/page-furniture.js";
 import { decodePaperSize, PAPER_PRESETS } from "../config/paper-size.js";
 import type { PublicationSettings } from "../config/publication-settings.js";
+import {COLOPHON_CSS} from './colophon.js';
 type ResolvedPreviewSource = { settings: PublicationSettings };
 
 export function createPublicationCss(source: Pick<ResolvedPreviewSource, "settings">): string {
@@ -79,6 +80,7 @@ p { text-indent: ${indent}; margin-block: 0; hanging-punctuation: allow-end; tex
 .kana-mark-source { position: absolute; width: 0; height: 0; overflow: hidden; }
 .kana-mark::after { content: "\u309b"; position: absolute; writing-mode: horizontal-tb; text-orientation: mixed; text-combine-upright: none; font-family: inherit; font-size: 1em; line-height: 1; width: 1em; height: 1em; top: -.12em; right: -.65em; }
 .kana-mark-semi::after { content: "\u309c"; }
+${COLOPHON_CSS}
 `;
 }
 
