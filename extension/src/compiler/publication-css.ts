@@ -69,7 +69,7 @@ ${["top-left-corner","top-left","top-center","top-right","top-right-corner","bot
   grid-auto-columns: minmax(0, 1fr);
 }
 .ogenkou-preview-grid-table > :is(thead, tbody) > tr > :is(th, td) { display: block; }
-p { text-indent: ${indent}; margin-block: 0; hanging-punctuation: allow-end; text-spacing-trim: space-start allow-end ideograph-alpha ideograph-numeric; }
+p { text-indent: ${indent}; margin-block: 0; hanging-punctuation: allow-end; text-spacing-trim: space-start allow-end; text-autospace: ideograph-alpha ideograph-numeric; }
 .ogenkou-tcy { -webkit-text-combine: horizontal; text-combine-upright: all; text-orientation: upright; }
 .connected-dashes { display: inline-block; text-combine-upright: none; letter-spacing: 0; white-space: nowrap; -webkit-text-fill-color: transparent; background-image: linear-gradient(currentColor, currentColor); background-repeat: no-repeat; background-position: center; background-size: ${writingMode === "vertical" ? ".03em 100%" : "100% .03em"}; }
 .ogenkou-emphasis { text-emphasis: filled sesame; }

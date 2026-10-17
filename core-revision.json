@@ -4,6 +4,6 @@
   "upstream": "https://github.com/vivliostyle/vivliostyle.js.git",
   "branch": "master",
   "baseRevision": "a90d13def0817ef4c67a6780cdbad80e460068db",
-  "revision": "98f72cf9655d50c3b21662b47907f83608b34d94",
-  "published": true
+  "revision": "8ee17fd42249fda6cbd2c8cd2a88c84a0c5e6130",
+  "published": false
 }

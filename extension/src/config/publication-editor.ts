@@ -6,7 +6,7 @@ import { DEFAULT_FURNITURE, furnitureLayout, validateFurnitureText, parseFurnitu
 export const BUILTIN_PUBLICATION: PublicationSettings = {
   publication: {title: "", author: ""},
   writingMode: "vertical",
-  layout: { ...DEFAULT_FURNITURE, runningHeadMaxLength: "14", columnCount: 1, columnGap: 5, pageSize: "A6", pageMargin: "auto", mirrorMargins: true, fontFamily: ["Yu Mincho", "serif"], fontSize: "9pt", lineHeight: 1.75, charactersPerLine: 40, linesPerPage: 16, paragraphIndent: "source", runningHead: true, pageNumber: true },
+  layout: { ...DEFAULT_FURNITURE, runningHeadMaxLength: "14", columnCount: 1, columnGap: 5, pageSize: "A6", pageMargin: "auto", mirrorMargins: true, fontFamily: ["Source Han Serif JP", "Yu Mincho", "serif"], fontSize: "9pt", lineHeight: 1.75, charactersPerLine: 40, linesPerPage: 16, paragraphIndent: "source", runningHead: true, pageNumber: true },
   processing: { titlePage: true, toc: true, tocDepth: 3, tocWritingMode: "inherit", tocLineHeight: 2, hardLineBreaks: true, preserveEmptyLines: true, preserveLineIndent: true,
     ruby: { pipeAngle: true, bareKanji: true, bracket: true },
     emphasis: { doubleAngle: true, bracket: true, mark: "﹅" },

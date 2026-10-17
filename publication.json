@@ -44,7 +44,7 @@
   "core": {
     "path": "vivliostyle",
     "url": "https://github.com/ikkoayagawa/vivliostyle.js.git",
-    "revision": "98f72cf9655d50c3b21662b47907f83608b34d94"
+    "revision": "8ee17fd42249fda6cbd2c8cd2a88c84a0c5e6130"
   },
   "exclude": [
     "extension/scripts/compare-compilers.mjs",
