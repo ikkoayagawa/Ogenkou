@@ -147,14 +147,9 @@ export function compileVfmManuscript(snapshot: WorkSnapshot, onTiming?: (phase: 
         (tokenizer as any).locator = original.locator; parser.blockTokenizers.shortcode = tokenizer; }
       return transform;
     }
-    function prepare() { return (tree: Tree) => {
-      const visit = (n: Tree) => {
-        if(n.type==="linkReference"&&/^(?:rb:|emphasismark:)/u.test((n as any).identifier??"")&&n.position){n.type="text";n.value=input.slice(n.position.start.offset,n.position.end.offset);delete n.children;}
-        if (n.children) { n.children = n.children.filter(c => c.type !== "shortcode" && c.type !== "yaml"); n.children.forEach(visit); }
-        if (n.type === "paragraph" && !settings.preserveLineIndent) {
-          const trim = (c: Tree) => { if(c.type === "text") c.value = c.value!.replace(/^[ \t　]+|(?<=\n)[ \t　]+/gu, ""); else c.children?.forEach(trim); }; n.children?.forEach(trim);
-        }
-      }; visit(tree);
+    // VFM wraps heading content in positionless section nodes. Insert source blanks
+    // before those transforms, while the root's block ranges still match the source.
+    function preserveSourceBlankLines() { return (tree: Tree) => {
       if (settings.preserveEmptyLines) {
         const lines = [...input.matchAll(/([^\r\n]*)(\r\n|\r|\n|$)/gu)].filter(m=>m[0].length), children: Tree[] = []; let index=0;
         for (const child of tree.children ?? []) {
@@ -165,8 +160,18 @@ export function compileVfmManuscript(snapshot: WorkSnapshot, onTiming?: (phase: 
         while(index<lines.length) { const line=lines[index++]!; if(/^[ \t　]*$/u.test(line[1]!)) children.push({type:"html",value:'<p class="source-blank-line" aria-hidden="true">&#160;</p>'}); } tree.children=children;
       }
     }; }
+    function prepare() { return (tree: Tree) => {
+      const visit = (n: Tree) => {
+        if(n.type==="linkReference"&&/^(?:rb:|emphasismark:)/u.test((n as any).identifier??"")&&n.position){n.type="text";n.value=input.slice(n.position.start.offset,n.position.end.offset);delete n.children;}
+        if (n.children) { n.children = n.children.filter(c => c.type !== "shortcode" && c.type !== "yaml"); n.children.forEach(visit); }
+        if (n.type === "paragraph" && !settings.preserveLineIndent) {
+          const trim = (c: Tree) => { if(c.type === "text") c.value = c.value!.replace(/^[ \t　]+|(?<=\n)[ \t　]+/gu, ""); else c.children?.forEach(trim); }; n.children?.forEach(trim);
+        }
+      }; visit(tree);
+
+    }; }
     const processor = VFM({ partial:true, disableFormatHtml:true, hardLineBreaks:false, mathRenderer:"mathml",
-      editPlugins: plugins => ({...plugins, mdastPlugins: [...plugins.mdastPlugins.map(p=>p===vfmToc ? shortcodeAdapter as any : p), prepare as any],
+      editPlugins: plugins => ({...plugins, mdastPlugins: [preserveSourceBlankLines as any, ...plugins.mdastPlugins.map(p=>p===vfmToc ? shortcodeAdapter as any : p), prepare as any],
         mdastToHastHandlers: {...plugins.mdastToHastHandlers, text: ((_h: any, node: Tree) => {
           const start=node.position?.start.offset, end=node.position?.end.offset;
           if(start===undefined||end===undefined) return {type:"text",value:node.value};

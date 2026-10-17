@@ -116,3 +116,14 @@ test("voiced kana use native shaping and uncommon kana marks use real inherited 
  assert(c.css.includes('content: "゛"'));assert(!c.css.includes('Times New Roman'));
  const off=compileVfmManuscript({...s,settings:{...s.settings,processing:{...s.settings.processing,kanaMarks:false}}});assert(off.html.includes(text));paths(off);
 });
+
+test("blank lines keep their source order inside heading sections",()=>{
+ for(const newline of ["\n","\r\n"]){
+  const source="# 第一章\n\nああ\n\n\nいい\n\n## 第二節\n\nうう\n".replaceAll("\n",newline),s=input([source]);
+  const snapshot={...s,settings:{...s.settings,processing:{...s.settings.processing,titlePage:false,toc:false}}};
+  const c=compileVfmManuscript(snapshot),dom:any=parse(c.html),paragraphs:string[]=[];
+  const text=(n:any):string=>n.nodeName==="#text"?n.value:(n.childNodes??[]).map(text).join("");
+  const walk=(n:any)=>{if(n.tagName==="p")paragraphs.push(n.attrs?.some((a:any)=>a.name==="class"&&a.value.split(/\s/u).includes("source-blank-line"))?"[blank]":text(n));for(const child of n.childNodes??[])walk(child);};walk(dom);
+  assert.deepEqual(paragraphs,["[blank]","ああ","[blank]","[blank]","いい","[blank]","[blank]","うう"],newline==="\n"?"LF":"CRLF");paths(c);
+ }
+});

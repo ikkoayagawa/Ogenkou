@@ -129,7 +129,16 @@ export async function startDisplay(base,nonce,api=acquireVsCodeApi()){
  function mountPaper(record,handle,originals=handle.containers){
   record.presentation?.remove();const doc=handle.containers[0].ownerDocument,root=doc.createElement('div');root.dataset.ogenkouPresentation='true';root.style.cssText='position:absolute;inset:0;pointer-events:auto';doc.body.append(root);record.presentation=root;
   const parents=new Map([[doc.body,root]]);
-  function parentFor(node){if(parents.has(node))return parents.get(node);const parent=parentFor(node.parentElement),clone=node.cloneNode(false);clone.style.setProperty('position','static','important');clone.style.setProperty('transform','none','important');clone.style.setProperty('zoom','1','important');clone.style.opacity='1';clone.style.visibility='visible';clone.style.pointerEvents='auto';clone.style.margin='0';clone.style.padding='0';parent.append(clone);parents.set(node,clone);return clone;}
+  function parentFor(node){
+   if(parents.has(node))return parents.get(node);
+   const parent=parentFor(node.parentElement),clone=node.cloneNode(false);
+   clone.style.setProperty('position','static','important');
+   // Preserve Core's output-pixel precision zoom; the outer iframe owns the user's display scale.
+   if(clone.hasAttribute('data-vivliostyle-spread-container'))clone.style.setProperty('--viv-outputScale','1','important');
+   else{clone.style.setProperty('transform','none','important');clone.style.setProperty('zoom','1','important');}
+   clone.style.opacity='1';clone.style.visibility='visible';clone.style.pointerEvents='auto';clone.style.margin='0';clone.style.padding='0';
+   parent.append(clone);parents.set(node,clone);return clone;
+  }
   const staging=new Set();if(originals===handle.containers)for(const paper of originals){let parent=paper;while(parent.parentElement!==doc.body)parent=parent.parentElement;staging.add(parent);}
   handle.containers.forEach((paper,i)=>{const parent=parentFor(originals[i].parentElement);paper.dataset.ogenkouPaper='true';parent.append(paper);});
   for(const parent of staging)if(!parent.querySelector('[data-vivliostyle-page-container]'))parent.remove();
