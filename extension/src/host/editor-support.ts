@@ -24,14 +24,32 @@ export function registerEditorSupport(context:vscode.ExtensionContext){
   const schedule=()=>{clearTimeout(timer);timer=setTimeout(()=>void update(),250);};
   context.subscriptions.push(status,vscode.window.onDidChangeActiveTextEditor(schedule),vscode.workspace.onDidChangeTextDocument(schedule),vscode.workspace.onDidChangeConfiguration(schedule),{dispose(){clearTimeout(timer);serial++;}});schedule();
   let worker:Worker|undefined,highlightTimer:ReturnType<typeof setTimeout>|undefined,budgetTimer:ReturnType<typeof setTimeout>|undefined,generation=0,decorations:vscode.TextEditorDecorationType[]=[];
-  const clear=()=>{void worker?.terminate();worker=undefined;clearTimeout(budgetTimer);decorations.splice(0).forEach(d=>d.dispose());};
-  const highlight=()=>{clearTimeout(highlightTimer);highlightTimer=setTimeout(()=>{
-    const id=++generation;clear();const editor=vscode.window.activeTextEditor,config=vscode.workspace.getConfiguration('ogenkou');if(!editor||editor.document.languageId!=='novel'||!config.get('highlight.enabled',true))return;
-    const rules=config.get<{pattern:string;flags?:string;color?:string;backgroundColor?:string}[]>('highlight.rules',[]).slice(0,32);if(!rules.length)return;
-    const version=editor.document.version;worker=new Worker(new URL('./highlight-worker.js',import.meta.url),{workerData:{text:editor.document.getText(),rules}});
-    budgetTimer=setTimeout(()=>{if(id===generation)clear();},150);
-    worker.once('message',(rows:{ranges:{start:number;end:number}[]}[])=>{if(id!==generation||editor.document.version!==version)return;clearTimeout(budgetTimer);void worker?.terminate();worker=undefined;
-      rows.forEach((row,i)=>{const decoration=vscode.window.createTextEditorDecorationType({color:rules[i]?.color,backgroundColor:rules[i]?.backgroundColor});decorations.push(decoration);editor.setDecorations(decoration,row.ranges.map(r=>new vscode.Range(editor.document.positionAt(r.start),editor.document.positionAt(r.end))));});});worker.once('error',()=>{if(id===generation)clear();});
-  },180);};
-  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(highlight),vscode.workspace.onDidChangeTextDocument(highlight),vscode.workspace.onDidChangeConfiguration(highlight),{dispose(){generation++;clearTimeout(highlightTimer);clear();}});highlight();
+  let highlightedEditor:vscode.TextEditor|undefined,ruleKey='';
+  const stopWorker=()=>{clearTimeout(budgetTimer);void worker?.terminate();worker=undefined;};
+  const clearDecorations=()=>{decorations.splice(0).forEach(d=>d.dispose());};
+  const highlight=()=>{
+    const id=++generation;clearTimeout(highlightTimer);stopWorker();
+    const editor=vscode.window.activeTextEditor,config=vscode.workspace.getConfiguration('ogenkou');
+    const rules=config.get<{pattern:string;flags?:string;color?:string;backgroundColor?:string}[]>('highlight.rules',[]).slice(0,32);
+    if(!editor||editor.document.languageId!=='novel'||!config.get('highlight.enabled',true)||!rules.length){clearDecorations();highlightedEditor=undefined;ruleKey='';return;}
+    const key=JSON.stringify(rules);
+    if(editor!==highlightedEditor||key!==ruleKey){clearDecorations();highlightedEditor=editor;ruleKey=key;}
+    // Keep decoration types alive during edits. VS Code tracks their existing
+    // ranges until the worker supplies replacements, avoiding an uncolored frame.
+    highlightTimer=setTimeout(()=>{
+      const version=editor.document.version;
+      const currentWorker=new Worker(new URL('./highlight-worker.js',import.meta.url),{workerData:{text:editor.document.getText(),rules}});worker=currentWorker;
+      budgetTimer=setTimeout(()=>{if(id===generation)stopWorker();},150);
+      currentWorker.once('message',(rows:{ranges:{start:number;end:number}[]}[])=>{
+        if(id!==generation||editor.document.version!==version||vscode.window.activeTextEditor!==editor)return;
+        stopWorker();
+        rows.forEach((row,i)=>{
+          const decoration=decorations[i]??(decorations[i]=vscode.window.createTextEditorDecorationType({color:rules[i]?.color,backgroundColor:rules[i]?.backgroundColor}));
+          editor.setDecorations(decoration,row.ranges.map(r=>new vscode.Range(editor.document.positionAt(r.start),editor.document.positionAt(r.end))));
+        });
+      });
+      currentWorker.once('error',()=>{if(id===generation)stopWorker();});
+    },180);
+  };
+  context.subscriptions.push(vscode.window.onDidChangeActiveTextEditor(highlight),vscode.workspace.onDidChangeTextDocument(event=>{if(event.document===vscode.window.activeTextEditor?.document)highlight();}),vscode.workspace.onDidChangeConfiguration(event=>{if(event.affectsConfiguration('ogenkou.highlight'))highlight();}),{dispose(){generation++;clearTimeout(highlightTimer);stopWorker();clearDecorations();}});highlight();
 }
