@@ -41,6 +41,7 @@ h1 { string-set: chapter-title attr(data-running-head); break-before: ${chapterB
 ${layout.furnitureMode !== "custom" ? "" : Array.from({ length: 5 }, (_, i) => `h${i + 1} { string-set: ${i === 0 ? "chapter-title attr(data-running-head), " : ""}ogenkou-h${i + 1} attr(data-running-head); }`).join("\n")}
 h1 { font-size: 1.6em; margin-block-end: 3em; }
 h2 { break-before: page; font-size: 1.15em; margin-block-end: 2em; }
+h1, h2, h3, h4, h5, h6 { font-weight: 400; }
 h1, h2 { break-after: avoid; }
 @page ogenkou-title { margin: 0; --vivliostyle-page-content-writing-mode: horizontal-tb; --vivliostyle-page-content-column-count: 1;
 ${["top-left-corner","top-left","top-center","top-right","top-right-corner","bottom-left-corner","bottom-left","bottom-center","bottom-right","bottom-right-corner"].map(box=>`  @${box} { content: none; }`).join("\n")}
