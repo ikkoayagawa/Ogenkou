@@ -255,7 +255,7 @@
   },
   "devDependencies": {
     "@types/node": "22.20.4",
-    "@types/vscode": "1.138.0",
+    "@types/vscode": "1.100.0",
     "typescript": "5.9.3"
   },
   "engines": {
