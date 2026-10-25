@@ -1,6 +1,6 @@
 {
   "name": "ogenkou",
-  "version": "0.9.6",
+  "version": "0.9.9",
   "private": true,
   "publisher": "IkkoAyagawa",
   "displayName": "Ogenkou",
@@ -36,6 +36,16 @@
       {
         "command": "ogenkou.colophon.add",
         "title": "Ogenkou: 奥付を追加"
+      },
+      {
+        "command": "ogenkou.text.addRuby",
+        "title": "Ogenkou: 選択した文字にルビを付ける",
+        "enablement": "editorLangId == novel && editorHasSelection && !editorReadonly"
+      },
+      {
+        "command": "ogenkou.text.addEmphasis",
+        "title": "Ogenkou: 選択した文字に傍点を付ける",
+        "enablement": "editorLangId == novel && editorHasSelection && !editorReadonly"
       }
     ],
     "menus": {
@@ -158,9 +168,69 @@
           ],
           "default": "base",
           "description": "小説記法を除去して数える場合のルビの数え方。親文字／読み／両方。"
+        },
+        "ogenkou.editing.rubyNotation": {
+          "type": "string",
+          "enum": [
+            "pipeAngle",
+            "bracket"
+          ],
+          "enumDescriptions": [
+            "｜親文字《よみ》",
+            "[[rb:親文字>よみ]]"
+          ],
+          "default": "pipeAngle",
+          "scope": "resource",
+          "description": "「選択した文字にルビを付ける」で挿入する記法。組版側でも対応する記法を有効にしてください。",
+          "enumItemLabels": [
+            "｜親文字《よみ》",
+            "[[rb:親文字>よみ]]"
+          ]
+        },
+        "ogenkou.editing.emphasisNotation": {
+          "type": "string",
+          "enum": [
+            "doubleAngle",
+            "bracket"
+          ],
+          "enumDescriptions": [
+            "《《文字》》",
+            "[[emphasismark:文字]]"
+          ],
+          "default": "doubleAngle",
+          "scope": "resource",
+          "description": "「選択した文字に傍点を付ける」で挿入する記法。組版側でも対応する記法を有効にしてください。",
+          "enumItemLabels": [
+            "《《文字》》",
+            "[[emphasismark:文字]]"
+          ]
         }
       }
-    }
+    },
+    "keybindings": [
+      {
+        "command": "ogenkou.text.addRuby",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorTextFocus && editorHasSelection && editorLangId == novel && !editorReadonly && !isComposing"
+      },
+      {
+        "command": "ogenkou.text.addEmphasis",
+        "key": "ctrl+alt+e",
+        "mac": "cmd+alt+e",
+        "when": "editorTextFocus && editorHasSelection && editorLangId == novel && !editorReadonly && !isComposing"
+      },
+      {
+        "command": "ogenkou.text.addRuby",
+        "key": "tab",
+        "when": "editorTextFocus && editorHasSelection && editorLangId == novel && !editorReadonly && !isComposing && !suggestWidgetVisible && !inSnippetMode && !editorTabMovesFocus"
+      },
+      {
+        "command": "ogenkou.text.addEmphasis",
+        "key": "shift+tab",
+        "when": "editorTextFocus && editorHasSelection && editorLangId == novel && !editorReadonly && !isComposing && !suggestWidgetVisible && !inSnippetMode && !editorTabMovesFocus"
+      }
+    ]
   },
   "type": "module",
   "license": "AGPL-3.0-only",

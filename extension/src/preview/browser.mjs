@@ -80,7 +80,7 @@ export async function startDisplay(base,nonce,api=acquireVsCodeApi()){
  const response=await fetch(base+'core.js');if(!response.ok)throw Error('Coreの読込みに失敗しました。');
  const scriptURL=URL.createObjectURL(new Blob([await response.arrayBuffer()],{type:'text/javascript'}));
  async function frame(name){
-  const iframe=document.createElement('iframe');iframe.title=name;iframe.className='paper';iframe.style.cssText='position:absolute;inset:0;width:1100px;height:850px;border:0;visibility:hidden;background:white';
+  const iframe=document.createElement('iframe');iframe.title=name;iframe.className='paper';iframe.style.cssText='position:absolute;inset:0;width:1100px;height:850px;border:0;visibility:hidden;background:transparent';
   const loaded=new Promise((resolve,reject)=>{const poll=setInterval(()=>{if(iframe.contentWindow?.VivliostyleCore){clearInterval(poll);clearTimeout(timer);resolve()}},30),timer=setTimeout(()=>{clearInterval(poll);iframe.remove();reject(Error('紙面の初期化が完了しませんでした。'))},30000)});
   iframe.srcdoc=`<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;scrollbar-width:none}::-webkit-scrollbar{display:none}#viewport{width:1100px;height:850px}</style></head><body><div id="viewport"></div><script nonce="${nonce}" src="${scriptURL}"></script></body></html>`;
   papers.append(iframe);await loaded;
@@ -100,7 +100,14 @@ export async function startDisplay(base,nonce,api=acquireVsCodeApi()){
   if(!front)return;const containers=front.handle.containers,doc=containers[0]?.ownerDocument;if(!doc)return;
   if(!doc.getElementById('ogenkou-display-style')){const style=doc.createElement('style');style.id='ogenkou-display-style';style.textContent='*{scrollbar-width:none!important}*::-webkit-scrollbar{display:none!important}html,body{margin:0!important;overflow:hidden!important}[data-ogenkou-paper]{position:absolute!important;margin:0!important;transform:none!important;zoom:1!important;display:block!important;visibility:visible!important}';doc.head.append(style);}
   let width=0,height=0;const order=[...containers].sort((a,b)=>Number(a.getAttribute('data-vivliostyle-page-side')==='right')-Number(b.getAttribute('data-vivliostyle-page-side')==='right'));
-  for(const c of order){c.style.left=width+'px';c.style.top='0px';width+=c.offsetWidth+12;height=Math.max(height,c.offsetHeight);}width=Math.max(1,width-12);
+  // Reserve both paper slots even when the other half of the spread is absent.
+  if(spread()&&order.length===1){
+   const c=order[0],paperWidth=c.offsetWidth;
+   c.style.left=(c.getAttribute('data-vivliostyle-page-side')==='right'?paperWidth+12:0)+'px';c.style.top='0px';
+   width=paperWidth*2+12;height=c.offsetHeight;
+  }else{
+   for(const c of order){c.style.left=width+'px';c.style.top='0px';width+=c.offsetWidth+12;height=Math.max(height,c.offsetHeight);}width=Math.max(1,width-12);
+  }
   const scale=fit?Math.min((papers.clientWidth-24)/width,(papers.clientHeight-24)/Math.max(1,height)):zoom;
   front.record.iframe.style.width=width+'px';front.record.iframe.style.height=height+'px';front.record.iframe.style.transform=`scale(${scale})`;front.record.iframe.style.left=(Math.max(12,(papers.clientWidth-width*scale)/2)+panX)+'px';front.record.iframe.style.top=(12+panY)+'px';
   document.getElementById('zoom').textContent=scale===1?'1:1':Math.round(scale*100)+'%';notify('view-state',{mode,zoom:scale,zoomSetting:zoom,fit,page,pages:containers.length,revision:front.wire.source.revision});
@@ -136,6 +143,9 @@ export async function startDisplay(base,nonce,api=acquireVsCodeApi()){
    // Preserve Core's output-pixel precision zoom; the outer iframe owns the user's display scale.
    if(clone.hasAttribute('data-vivliostyle-spread-container'))clone.style.setProperty('--viv-outputScale','1','important');
    else{clone.style.setProperty('transform','none','important');clone.style.setProperty('zoom','1','important');}
+   // Presentation positions papers across both slots, beyond Core's single-page clipping box.
+   clone.style.overflow='visible';
+   if(clone.hasAttribute('data-vivliostyle-viewer-viewport'))clone.style.background='transparent';
    clone.style.opacity='1';clone.style.visibility='visible';clone.style.pointerEvents='auto';clone.style.margin='0';clone.style.padding='0';
    parent.append(clone);parents.set(node,clone);return clone;
   }
@@ -158,7 +168,9 @@ export async function startDisplay(base,nonce,api=acquireVsCodeApi()){
  function maybeImport(){
   clearTimeout(quietTimer);if(importing||closed)return;
   if(committed&&lanes.some(l=>l.state==='RUNNING'))return;
-  if(committed?.seed&&!navigated&&latest?.request>lastStarted&&front?.wire.request<latest.request&&latest.source.compatibilityKey===committed.wire.source.compatibilityKey){kick();return;}
+  // Defer the completed result only when a focused update actually started.
+  // Nonportable resources and unavailable lanes must fall through to full import.
+  if(!navigated&&front?.wire.request<latest?.request&&kick())return;
   if(committed&&Date.now()-lastEditAt<300){quietTimer=setTimeout(maybeImport,300-(Date.now()-lastEditAt));return;}
   if(!pending){if(!requested&&latest&&committed&&committed.wire.request<latest.request){requested=true;cw.contentWindow.postMessage({type:'seed-credit'},origin)}return;}
   const packet=pending;pending=null;importing=true;
@@ -178,8 +190,8 @@ export async function startDisplay(base,nonce,api=acquireVsCodeApi()){
   })().finally(()=>{importing=false;kick();maybeImport()}));
  }
  function kick(){
-  if(closed||importing||!committed?.seed||!latest||!latest.source.portable||latest.source.compatibilityKey!==committed.wire.source.compatibilityKey||latest.request<=lastStarted||(front?.intent===intent&&front?.wire.request>=latest.request))return;
-  const lane=lanes.find(l=>l.state==='DONE');if(!lane)return;
+  if(closed||importing||!committed?.seed||!latest||!latest.source.portable||latest.source.compatibilityKey!==committed.wire.source.compatibilityKey||latest.request<=lastStarted||(front?.intent===intent&&front?.wire.request>=latest.request))return false;
+  const lane=lanes.find(l=>l.state==='DONE');if(!lane)return false;
   const wire=latest,baseline=committed,jobIntent=intent;lastStarted=wire.request;lane.state='RUNNING';baseline.users++;
   track((async()=>{
    const start=performance.now(),record=lane.record;notify('s-start',{revision:wire.source.revision,lane:lane.name,seedRevision:baseline.wire.source.revision});
@@ -195,6 +207,7 @@ export async function startDisplay(base,nonce,api=acquireVsCodeApi()){
     lane.state=await publish(record,handle,wire,lane.name,null,jobIntent,index,false,unit.containers)?'FRONT':'DONE';
    }finally{baseline.users--;if(lane.state==='RUNNING')lane.state='DONE';reclaim();kick();maybeImport()}
   })());
+  return true;
  }
  function resolveAnchor(revision){
   if(!navAnchor)return Promise.resolve(null);const request=++targetSerial;

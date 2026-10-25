@@ -49,6 +49,7 @@
   },
   "exclude": [
     "extension/scripts/compare-compilers.mjs",
-    "extension/scripts/probe-vfm-options.mjs"
+    "extension/scripts/probe-vfm-options.mjs",
+    "docs"
   ]
 }

@@ -1,0 +1,25 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import vm from 'node:vm';
+import ts from 'typescript';
+import {compileVfmManuscript} from '../src/compiler/vfm-manuscript.js';
+import {BUILTIN_PUBLICATION} from '../src/config/publication-editor.js';
+import type {WorkSnapshot} from '../src/services/snapshot-builder.js';
+const source=fs.readFileSync(new URL('../../src/host/notation-commands.ts',import.meta.url),'utf8');
+const code=ts.transpileModule(source,{compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2022}}).outputText;
+function scenario(initial:string,ranges:[number,number][],config:Record<string,string>={}){
+ let text=initial,edits=0;const commands=new Map<string,()=>Promise<void>>(),warnings:string[]=[],prompts:any[]=[],answers:(string|undefined|Promise<string|undefined>)[]=[];
+ const document={languageId:'novel',version:1,isClosed:false,uri:'file:///test.nv',offsetAt:(p:number)=>p,positionAt:(n:number)=>n,getText:(range?:{start:number;end:number})=>range?text.slice(range.start,range.end):text};
+ const editor={document,selections:ranges.map(([start,end])=>({start,end,isEmpty:start===end})),edit:async(fn:Function)=>{const replacements:{start:number;end:number;text:string}[]=[];fn({replace:(range:any,text:string)=>replacements.push({...range,text})});for(const r of replacements.sort((a,b)=>b.start-a.start))text=text.slice(0,r.start)+r.text+text.slice(r.end);edits++;document.version++;return true;}};
+ const vscode={Selection:class {isEmpty=true;constructor(public start:number,public end:number){}},window:{activeTextEditor:editor,showInputBox:(options:any)=>{prompts.push(options);return Promise.resolve(answers.shift());},showInformationMessage:(m:string)=>warnings.push(m),showWarningMessage:(m:string)=>warnings.push(m),showErrorMessage:(m:string)=>warnings.push(m)},workspace:{getConfiguration:()=>({get:(key:string,fallback:string)=>config[key]??fallback})},commands:{registerCommand:(name:string,fn:()=>Promise<void>)=>{commands.set(name,fn);return {dispose(){}};}}};
+ const exports:any={};vm.runInNewContext(code,{exports,require:(name:string)=>{assert.equal(name,'vscode');return vscode;}});exports.registerNotationCommands({subscriptions:[]});
+ return {document,editor,answers,prompts,warnings,run:(kind:string)=>commands.get('ogenkou.text.add'+kind)!(),text:()=>text,edits:()=>edits};
+}
+function compiled(text:string){const settings={...BUILTIN_PUBLICATION,processing:{...BUILTIN_PUBLICATION.processing,titlePage:false,toc:false}};const snapshot:WorkSnapshot={work:'file:///work/',epoch:1,revision:1,fingerprint:'notation',content:text,boundaries:[],sources:[{uri:'file:///work/01.nv',text,virtualStart:0,virtualEnd:text.length,dirty:true}],configText:'{}',config:{theme:[],quickPreview:true,overrides:{}},settings,rawSettings:settings,resources:[],resourceManifestComplete:false};return compileVfmManuscript(snapshot).html;}
+
+test('default ruby inserts an empty reading and positions the caret after a UTF-16 selection',async()=>{const s=scenario('😀原稿です。',[[2,4]]);await s.run('Ruby');assert.equal(s.text(),'😀｜原稿《》です。');assert.equal(s.edits(),1);assert.equal(s.prompts.length,0);const caret=s.editor.selections[0]!;assert.equal(s.text().slice(caret.start-1,caret.end+1),'《》');assert(caret.isEmpty);});
+test('configured bracket ruby inserts an empty reading and places the caret before closing brackets',async()=>{const ruby=scenario('原稿',[[0,2]],{'editing.rubyNotation':'bracket'});await ruby.run('Ruby');assert.equal(ruby.text(),'[[rb:原稿>]]');const caret=ruby.editor.selections[0]!;assert.equal(ruby.text().slice(caret.start-1,caret.end+2),'>]]');const emphasis=scenario('大切',[[0,2]],{'editing.emphasisNotation':'bracket'});await emphasis.run('Emphasis');assert.equal(emphasis.text(),'[[emphasismark:大切]]');assert.match(compiled(emphasis.text()),/ogenkou-emphasis/u);});
+test('multiple ruby carets account for preceding insertions and preserve primary selection order',async()=>{const s=scenario('春と😀夏',[[4,5],[0,1]]);await s.run('Ruby');assert.equal(s.text(),'｜春《》と😀｜夏《》');assert.equal(s.edits(),1);for(const caret of s.editor.selections)assert.equal(s.text().slice(caret.start-1,caret.end+1),'《》');assert(s.editor.selections[0]!.start>s.editor.selections[1]!.start);});
+test('multiple selections receive emphasis in a single edit',async()=>{const s=scenario('春と夏',[[0,1],[2,3]]);await s.run('Emphasis');assert.equal(s.text(),'《《春》》と《《夏》》');assert.equal(s.edits(),1);assert.match(compiled(s.text()),/ogenkou-emphasis/u);});
+test('empty or multiline selections and invalid delimiters do not produce broken notation',async()=>{for(const [text,ranges,kind]of [['本文',[[0,0]],'Ruby'],['本\n文',[[0,3]],'Emphasis'],['《本文》',[[0,4]],'Ruby']]as[string,[number,number][],string][]){const s=scenario(text,ranges);await s.run(kind);assert.equal(s.edits(),0);assert(s.warnings.length);}});

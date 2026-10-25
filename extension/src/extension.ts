@@ -16,6 +16,7 @@ import {SourceHistory,resolveSource,type SourcePosition} from "./preview/source-
 import {calculateLayoutGeometry} from "./config/layout-geometry.js";
 import {decodePaperSize,PAPER_PRESETS} from "./config/paper-size.js";
 import {findBrowser,renderPdf} from "./services/pdf-export.js";
+import {registerNotationCommands} from "./host/notation-commands.js";
 import {registerEditorSupport} from "./host/editor-support.js";
 import {createColophon} from './services/create-colophon.js';
 import {isWorkSource} from './compiler/colophon.js';
@@ -43,7 +44,7 @@ class PreviewSession {
   #lastViewState="";
   #problems=vscode.languages.createDiagnosticCollection("ogenkou");
   #positions = new Map<string,{uri:string;offset:number;at:number}>();
-  constructor(private readonly context: vscode.ExtensionContext, readonly manuscript: vscode.Uri,
+  constructor(private readonly context: vscode.ExtensionContext, readonly manuscript: vscode.Uri, private sourceGroup: vscode.TabGroup,
     private readonly onClose: () => void) {
     const root = vscode.Uri.joinPath(manuscript, "..");
     this.#position={uri:manuscript.toString(),offset:vscode.window.activeTextEditor?.document.uri.toString()===manuscript.toString()?vscode.window.activeTextEditor.document.offsetAt(vscode.window.activeTextEditor.selection.active):0};
@@ -120,7 +121,16 @@ class PreviewSession {
           this.#position={uri:event.textEditor.document.uri.toString(),offset:event.textEditor.document.offsetAt(event.selections[0]!.active),at:Date.now()};void panel.webview.postMessage({type:"source-focus"});this.refresh(true);}}));
     }catch(error){await this.close();throw error;}
   }
-  reveal(): void {this.#panel?.reveal(vscode.ViewColumn.Beside,true);}
+  get sourceEditorGroup(): vscode.TabGroup {return this.sourceGroup;}
+  reveal(sourceGroup?: vscode.TabGroup): void {if(sourceGroup)this.sourceGroup=sourceGroup;this.#panel?.reveal(vscode.ViewColumn.Beside,true);}
+  #sourceViewColumn(uri:vscode.Uri):vscode.ViewColumn {
+    const groups=vscode.window.tabGroups.all,origin=groups.includes(this.sourceGroup)?this.sourceGroup:undefined;
+    const contains=(group:vscode.TabGroup)=>group.tabs.some(tab=>tab.input instanceof vscode.TabInputText&&tab.input.uri.toString()===uri.toString());
+    // Hidden tabs count too. Prefer the invoking group if the same file is open twice.
+    const existing=origin&&contains(origin)?origin:groups.find(contains);
+    const fallback=origin??groups.find(group=>group.activeTab?.input instanceof vscode.TabInputText)??vscode.window.tabGroups.activeTabGroup;
+    return (existing??fallback).viewColumn;
+  }
   #addingColophon?:Promise<void>;
   addColophon():Promise<void>{
     if(this.#addingColophon)return this.#addingColophon;
@@ -174,7 +184,7 @@ class PreviewSession {
     const captured=input!.snapshot.sources.find(s=>s.uri===resolved.uri)!;
     const offset=document.getText()===captured.text?resolved.offset:this.#history.rebase(resolved.uri,resolved.offset,resolved.version,document.version);
     if(offset===null)throw Error("原稿の変更履歴が不足しています。プレビューを更新してから移動してください。");
-    const editor=await vscode.window.showTextDocument(document,{viewColumn:vscode.ViewColumn.One,preserveFocus:false});if(this.#closed)return;
+    const editor=await vscode.window.showTextDocument(document,{viewColumn:this.#sourceViewColumn(document.uri),preserveFocus:false,preview:false});if(this.#closed)return;
     const point=document.positionAt(offset);editor.selection=new vscode.Selection(point,point);editor.revealRange(new vscode.Range(point,point),vscode.TextEditorRevealType.InCenterIfOutsideViewport);
     this.events.push({type:"source-revealed",revision:position.revision,at:Date.now(),uri:resolved.uri,offset});
   }
@@ -229,19 +239,20 @@ class PreviewSession {
 let session: PreviewSession|undefined;
 export async function activate(context: vscode.ExtensionContext) {
   registerEditorSupport(context);
+  registerNotationCommands(context);
   let opening: Promise<void>|undefined;
-  const open=async(uri?: vscode.Uri)=>{
+  const open=async(uri?: vscode.Uri,sourceGroup=vscode.window.tabGroups.activeTabGroup)=>{
     if(opening)await opening;
     const target=uri instanceof vscode.Uri?uri:vscode.window.activeTextEditor?.document.uri;
     const selected=target?.scheme==="file"&&isWorkSource(target.toString())?target:(await vscode.window.showOpenDialog({canSelectMany:false,filters:{"小説原稿・奥付":["novel","nv","yaml","yml"]}}))?.[0];
     if(!selected)return;
-    if(session?.manuscript.toString()===selected.toString()){session.reveal();return;}
-    opening=(async()=>{await session?.close();const next=new PreviewSession(context,selected,()=>{if(session===next)session=undefined;});session=next;await next.open();})();
+    if(session?.manuscript.toString()===selected.toString()){session.reveal(sourceGroup);return;}
+    opening=(async()=>{await session?.close();const next=new PreviewSession(context,selected,sourceGroup,()=>{if(session===next)session=undefined;});session=next;await next.open();})();
     try{await opening;}catch(error){void vscode.window.showErrorMessage("Ogenkou: "+String(error));}finally{opening=undefined;}
   };
   context.subscriptions.push(vscode.commands.registerCommand("ogenkou.preview.open",open),
     vscode.commands.registerCommand("ogenkou.preview.refresh",()=>session?.refresh(true)),
-    vscode.commands.registerCommand("ogenkou.preview.restart",async()=>{const target=session?.manuscript;if(target){await session?.close();await open(target);}}),
+    vscode.commands.registerCommand("ogenkou.preview.restart",async()=>{const target=session?.manuscript,sourceGroup=session?.sourceEditorGroup;if(target){await session?.close();await open(target,sourceGroup);}}),
     vscode.commands.registerCommand("ogenkou.preview.close",()=>session?.close()));
   context.subscriptions.push(vscode.commands.registerCommand("ogenkou.pdf.export",async()=>{if(!session)await open();await session?.exportPdf();}));
   context.subscriptions.push(vscode.commands.registerCommand('ogenkou.colophon.add',async()=>{try{if(!session)await open();await session?.addColophon();}catch(error){void vscode.window.showErrorMessage('Ogenkou: '+String(error));}}));
