@@ -10,10 +10,10 @@ export function settingsUI(api,state,saveState){
  const values=()=>({...view?.values,...changes});
  const send=(action,data={})=>{if(initialBusy&&['save','freeze'].includes(action))return;pending=true;api.postMessage({type:'settings',action,request:++serial,target:target.value,token:view?.token,...data});render();};
  function put(key,value){if(JSON.stringify(view.values[key])===JSON.stringify(value))delete changes[key];else changes[key]=value;}
- function changed(key,value){put(key,value);render();}
+ function changed(key,value){put(key,value);if(key==='writingMode')preset();render();}
  function paperInfo(){const p=decodePaperSize(String(values()['layout.pageSize']),PAPER_PRESETS),preset=PAPER_PRESETS.find(x=>x.width===p.width&&x.height===p.height||x.height===p.width&&x.width===p.height);return {...p,name:preset?.name??'custom',landscape:(p.width??0)>(p.height??0)};}
  function preset(){const v=values(),preset=view.paperLayouts[v.writingMode+':'+paperInfo().name];if(preset)for(const [k,value]of Object.entries(preset))put(k,structuredClone(value));}
- function reset(key){if(key==='layout.pageSize')state.customPaper=false;const preset=view.resetPaperLayouts[values().writingMode+':'+paperInfo().name];put(key,structuredClone(preset&&key in preset?preset[key]:view.defaults[key]));render();}
+ function reset(key){if(key==='layout.pageSize')state.customPaper=false;const preset=view.resetPaperLayouts[values().writingMode+':'+paperInfo().name];changed(key,structuredClone(preset&&key in preset?preset[key]:view.defaults[key]));}
  function row(key,label,group){const root=document.createElement('div');root.className='settings-row';const caption=document.createElement('label');caption.textContent=label;caption.htmlFor='setting-'+key;root.append(caption);const button=document.createElement('button');button.type='button';button.className='reset';button.dataset.resetKey=key;button.textContent=target.value==='project'?'デフォルトに戻す':'初期設定値に戻す';button.title='本文・柱の項目は現在の用紙／組方向のプリセット、その他は共通設定へ戻します。';button.disabled=pending;button.onclick=()=>reset(key);root.append(button);group.append(root);return root;}
  function help(root,text){const note=document.createElement('small');note.textContent=text;root.append(note);return note;}
  function numeric(key,value,caption,parent,apply,disabled=false){const label=document.createElement('label');label.textContent=caption;const input=document.createElement('input');input.type='number';input.min='0';input.step='0.1';input.value=value??'';input.disabled=pending||disabled;input.dataset.key=key;input.id='setting-'+key;input.onchange=()=>apply(Number(input.value));label.append(input);parent.append(label);return input;}
@@ -24,7 +24,7 @@ export function settingsUI(api,state,saveState){
   input.id='setting-'+key;input.dataset.key=key;input.disabled=pending||(key==='processing.tocDepth'&&values()['processing.toc']===false)||(/(?:top|bottom)(?:Left|Right)Text$/.test(key)&&values()[key.replace(/Text$/,'Align')]==='none')||(['processing.verticalQuotes','processing.automaticTcy','processing.kanaMarks'].includes(key)&&values().writingMode==='horizontal');
   if(/FontFamily$/.test(key))input.placeholder='本文のフォント設定を引き継ぐ';
   const read=()=>fontSize?(input.value===''?'':input.value+'pt'):input.type==='checkbox'?input.checked:typeof v==='number'?Number(input.value):Array.isArray(v)?input.value.split(',').map(s=>s.trim()).filter(Boolean):input.value;
-  input.oninput=()=>{put(key,read());geometry();dirty();};input.onchange=()=>{put(key,read());if(key==='writingMode')preset();render();};root.insertBefore(input,root.querySelector('button'));if(input.type==='checkbox')root.dataset.checkbox='true';
+  input.oninput=()=>{put(key,read());geometry();dirty();};input.onchange=()=>changed(key,read());root.insertBefore(input,root.querySelector('button'));if(input.type==='checkbox')root.dataset.checkbox='true';
   return root;
  }
  function pair(parent,items){const wrap=document.createElement('div');wrap.className='settings-pair';parent.append(wrap);for(const [key,label]of items)control(key,wrap,label);}
@@ -34,7 +34,7 @@ export function settingsUI(api,state,saveState){
   const dims=document.createElement('div');dims.className='paper-dimensions';root.append(dims);const customMode=info.name==='custom'||state.customPaper;
   if(customMode){numeric('paper.width',info.width,'幅（mm）',dims,w=>changed('layout.pageSize',`${w}mm,${info.height??148}mm`));numeric('paper.height',info.height,'高さ（mm）',dims,h=>changed('layout.pageSize',`${info.width??105}mm,${h}mm`));select.value='custom';}
   else{const label=document.createElement('label');label.textContent='用紙の向き';const orient=document.createElement('select');orient.dataset.key='paper.orientation';for(const [v,t]of [['portrait','縦向き'],['landscape','横向き']]){const o=document.createElement('option');o.value=v;o.textContent=t;orient.append(o);}orient.value=info.landscape?'landscape':'portrait';orient.disabled=pending;orient.onchange=()=>{const p=PAPER_PRESETS.find(p=>p.name===info.name),reverse=orient.value==='landscape';put('layout.pageSize',`${reverse?p.height:p.width}mm,${reverse?p.width:p.height}mm`);preset();render();};label.append(orient);dims.append(label);help(dims,`現在：幅${info.width} × 高さ${info.height} mm`);}
-  help(root,'用紙を選ぶと本文・柱のプリセットをdraftへ読み込みます。「適用」までは紙面を変えません。デフォルト側で適用するとこの用紙のプリセットを更新します。');
+  help(root,'用紙または縦書き・横書きを切り替えると、その用紙・組方向に合った本文・柱のプリセットを読み込みます。「適用」までは紙面を変えません。デフォルト側で適用するとこの用紙のプリセットを更新します。');
  }
  function margins(parent){const v=values(),auto=v['layout.pageMargin']==='auto',decoded=decodePageMargins(String(v['layout.pageMargin'])),root=row('layout.pageMargin','余白',parent),select=document.createElement('select');select.dataset.key='margin.mode';select.id='setting-layout.pageMargin';select.disabled=pending;
   for(const [value,text]of [['auto','auto（字数・行数から計算）'],['custom','カスタム（余白を優先）']]){const o=document.createElement('option');o.value=value;o.textContent=text;select.append(o);}select.value=auto?'auto':'custom';root.insertBefore(select,root.querySelector('button'));

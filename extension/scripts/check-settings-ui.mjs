@@ -19,6 +19,15 @@ try{
  await page.goto('http://127.0.0.1:'+server.address().port+'/');await page.evaluate(async()=>{const {settingsUI}=await import('/ui.mjs');window.saved={};window.receive=settingsUI({postMessage:m=>window.hostSettings(m)},window.saved,()=>{});window.receive({type:'initial-layout',busy:false});});
  const field=key=>page.locator('[data-key="'+key+'"]');const change=async(key,value)=>{const f=field(key);if(await f.evaluate(n=>n.tagName)==='SELECT')await f.selectOption(String(value));else await f.fill(String(value));await f.dispatchEvent('change');};
  await page.locator('#settings-toggle').click();await field('publication.title').waitFor();assert.deepEqual(await page.getByRole('tab').allTextContents(),['作品情報','紙面のレイアウト','柱・ノンブルの設定','組版処理']);assert(await page.locator('[data-section=publication]').isVisible());assert(await page.locator('[data-section=publication] [data-key="processing.toc"]').isVisible());assert(await page.locator('[data-section=publication] [data-key="processing.titlePage"]').isVisible());await page.getByRole('tab',{name:'紙面のレイアウト',exact:true}).click();await field('layout.fontSize').waitFor();checks.push('production settings DOM loaded');
+ // Direction changes, including reset, must use the current paper's preset.
+ const configBeforeModeChange=store.records.get(uri).text;
+ await field('writingMode').selectOption('horizontal');
+ for(const key of ['layout.charactersPerLine','layout.linesPerPage'])assert.equal(await field(key).inputValue(),String(trusted.paperLayouts['horizontal:A6'][key]),'horizontal preset '+key);
+ assert.equal(store.records.get(uri).text,configBeforeModeChange,'direction changes stay in the draft until Apply');
+ await page.locator('[data-reset-key="writingMode"]').click();
+ assert.equal(await field('writingMode').inputValue(),'vertical');
+ for(const key of ['layout.charactersPerLine','layout.linesPerPage'])assert.equal(await field(key).inputValue(),String(trusted.paperLayouts['vertical:A6'][key]),'reset must restore the vertical preset '+key);
+ checks.push('writing direction changes and reset apply the current paper preset without saving');
  // Force a measurable scrollbar even when the host uses overlay scrollbars.
  const scrollbarStyle=await page.addStyleTag({content:'#settings::-webkit-scrollbar{width:14px}'});
  const tabGeometry=[];await page.locator('#settings').evaluate(n=>Promise.all(n.getAnimations().map(a=>a.finished)));

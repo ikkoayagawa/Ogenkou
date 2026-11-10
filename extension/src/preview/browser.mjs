@@ -13,7 +13,7 @@ const decode=source=>({...source,resources:source.resources.map(r=>({...r,conten
 export function startCW(base){
  let viewer=null,latest=null,busy=false,completed=null,credit=true,sent=-1,key=null,started=-1;
  const emit=value=>parent.postMessage(value,'*');
- const make=()=>new VivliostyleCore.CoreViewer({window,viewportElement:document.getElementById('viewport'),userAgentRootURL:base+'resources/'},{autoResize:false,allowScripts:false,renderAllPages:true,paginationMode:'complete',pageViewMode:'singlePage'});
+ const make=()=>new VivliostyleCore.CoreViewer({window,viewportElement:document.getElementById('viewport'),userAgentRootURL:base+'resources/'},{autoResize:false,allowScripts:false,fixedEmphasisLeading:true,renderAllPages:true,paginationMode:'complete',pageViewMode:'singlePage'});
  async function sendSeed(){
   if(busy||!credit||!completed||completed.request<=sent)return;
   const job=completed;credit=false;sent=job.request;busy=true;
@@ -47,7 +47,7 @@ export function startCW(base){
   if(m.type==='oracle'){
    (async()=>{const deadline=Date.now()+120000;while(busy){if(Date.now()>deadline)throw Error('検証用組版の待機が終了しませんでした。');await pause(20)}
     const viewport=document.createElement('div');viewport.style.cssText='width:1100px;height:850px';document.body.append(viewport);
-    const oracle=new VivliostyleCore.CoreViewer({window,viewportElement:viewport,userAgentRootURL:base+'resources/'},{autoResize:false,allowScripts:false,renderAllPages:true,paginationMode:'complete',pageViewMode:'singlePage'});
+    const oracle=new VivliostyleCore.CoreViewer({window,viewportElement:viewport,userAgentRootURL:base+'resources/'},{autoResize:false,allowScripts:false,fixedEmphasisLeading:true,renderAllPages:true,paginationMode:'complete',pageViewMode:'singlePage'});
     try{const done=terminal(oracle,m.wire.source.revision,'loaded');oracle.loadMemoryDocument(decode(m.wire.source),{fragment:m.wire.source.fragment});await done;
      await oracle.waitForPreviewResources({complete:true});
      const packet=oracle.exportCompletedPaper(m.wire.source.compatibilityKey),unit=oracle.getCurrentPreviewDisplayUnit();
@@ -85,7 +85,7 @@ export async function startDisplay(base,nonce,api=acquireVsCodeApi()){
   iframe.srcdoc=`<!doctype html><html><head><meta charset="utf-8"><style>html,body{margin:0;scrollbar-width:none}::-webkit-scrollbar{display:none}#viewport{width:1100px;height:850px}</style></head><body><div id="viewport"></div><script nonce="${nonce}" src="${scriptURL}"></script></body></html>`;
   papers.append(iframe);await loaded;
   const win=iframe.contentWindow,viewport=iframe.contentDocument.getElementById('viewport');viewport.style.opacity='0';viewport.style.pointerEvents='none';
-  const viewer=new win.VivliostyleCore.CoreViewer({window:win,viewportElement:viewport,userAgentRootURL:base+'resources/'},{autoResize:false,allowScripts:false,renderAllPages:false,paginationMode:'target-display-unit',pageViewMode:'singlePage'});
+  const viewer=new win.VivliostyleCore.CoreViewer({window:win,viewportElement:viewport,userAgentRootURL:base+'resources/'},{autoResize:false,allowScripts:false,fixedEmphasisLeading:true,renderAllPages:false,paginationMode:'target-display-unit',pageViewMode:'singlePage'});
   const record={iframe,viewer,owner:null,presentation:null};frames.push(record);return record;
  }
  function dispose(record){record.viewer.cancelPreviewUpdate();record.viewer.disposeMemoryResources();record.iframe.remove();if(record.owner)record.owner.users--;frames=frames.filter(r=>r!==record)}
