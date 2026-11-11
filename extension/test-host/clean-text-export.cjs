@@ -1,0 +1,20 @@
+const vscode=require('vscode'),fs=require('node:fs/promises'),path=require('node:path'),assert=require('node:assert/strict');
+exports.run=async()=>{
+ const workspace=process.env.OGENKOU_ENTRY_WORKSPACE,result=process.env.OGENKOU_ENTRY_RESULT,checks=[];
+ const extension=vscode.extensions.getExtension('IkkoAyagawa.ogenkou');assert(extension);await extension.activate();
+ const uri=name=>vscode.Uri.file(path.join(workspace,name));
+ const command=target=>vscode.commands.executeCommand('ogenkou.text.exportClean',target);
+ const document=await vscode.workspace.openTextDocument(uri('1.nv'));
+ const edit=new vscode.WorkspaceEdit();edit.insert(document.uri,new vscode.Position(0,document.lineAt(0).text.length),'と《《冬》》');assert(await vscode.workspace.applyEdit(edit));assert(document.isDirty);
+ assert(await command(vscode.Uri.file(workspace)));
+ assert.equal(await fs.readFile(path.join(workspace,'book.txt'),'utf8'),'春と冬\n\n夏\n\n秋\n');checks.push('folder export uses natural order and unsaved text, excludes nested and unrelated files');
+ assert(await command(uri('2.novel')));assert.equal(await fs.readFile(path.join(workspace,'2.txt'),'utf8'),'夏\n');checks.push('individual .novel exports only its own body');
+ assert(await command(uri('1.nv')));assert.equal(await fs.readFile(path.join(workspace,'1.txt'),'utf8'),'春と冬\n');assert.equal(await fs.readFile(path.join(workspace,'1.nv'),'utf8'),'｜春《はる》');checks.push('.nv export includes unsaved changes without saving the source');
+ const output=await vscode.workspace.openTextDocument(uri('2.txt')),dirty=new vscode.WorkspaceEdit();dirty.insert(output.uri,new vscode.Position(0,0),'編集中');assert(await vscode.workspace.applyEdit(dirty));
+ assert.equal(await command(uri('2.novel')),undefined);assert.equal(await fs.readFile(path.join(workspace,'2.txt'),'utf8'),'夏\n');checks.push('dirty output is protected from overwrite');
+ assert.equal(await command(uri('empty')),undefined);await assert.rejects(fs.stat(path.join(workspace,'empty','empty.txt')));checks.push('empty folder creates no output');
+ const manifest=extension.packageJSON;assert(manifest.activationEvents.includes('onStartupFinished'));
+ assert(manifest.contributes.commands.some(c=>c.command==='ogenkou.text.exportClean'&&c.title==='クリーンなtxtを出力'));
+ assert(manifest.contributes.menus['explorer/context'].some(c=>c.command==='ogenkou.text.exportClean'&&c.when.includes('resource in ogenkou.cleanTextFolders')));checks.push('Explorer menu is contributed for manuscript files and indexed folders');
+ await fs.writeFile(result,JSON.stringify({checks,vscode:vscode.version},null,2));
+};

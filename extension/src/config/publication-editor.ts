@@ -68,7 +68,7 @@ export const PUBLICATION_FIELDS: readonly PublicationField[] = [
   { key: "processing.ruby.bareKanji", label: "\"漢字《読み》\"をルビに変換する" },
   { key: "processing.ruby.bracket", label: "\"[[rb:親文字>読み]]\"をルビに変換する" },
   { key: "processing.emphasis.doubleAngle", label: "\"《《本文》》\"を傍点に変換する" },
-  { key: "processing.emphasis.bracket", label: "\"[[emphasismark:本文]]\"を傍点に変換する" },
+  { key: "processing.emphasis.bracket", label: "\"[[emphasismark:本文>﹅]]\"を傍点に変換する" },
   { key: "processing.emphasis.mark", label: "傍点の記号" },
   { key: "processing.connectedDashes", label: "連続するダッシュを連結する" },
   { key: "processing.verticalQuotes", label: "縦書きの引用符を調整する" },

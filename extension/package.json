@@ -1,12 +1,13 @@
 {
   "name": "ogenkou",
-  "version": "0.9.11",
+  "version": "0.9.13",
   "private": true,
   "publisher": "IkkoAyagawa",
   "displayName": "Ogenkou",
   "main": "./extension.cjs",
   "activationEvents": [
-    "onLanguage:novel"
+    "onLanguage:novel",
+    "onStartupFinished"
   ],
   "categories": [
     "Other"
@@ -46,6 +47,11 @@
         "command": "ogenkou.text.addEmphasis",
         "title": "Ogenkou: 選択した文字に傍点を付ける",
         "enablement": "editorLangId == novel && editorHasSelection && !editorReadonly"
+      },
+      {
+        "command": "ogenkou.text.exportClean",
+        "title": "クリーンなtxtを出力",
+        "category": "Ogenkou"
       }
     ],
     "menus": {
@@ -54,6 +60,13 @@
           "command": "ogenkou.preview.open",
           "group": "navigation",
           "when": "resourceLangId == novel"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "ogenkou.text.exportClean",
+          "group": "ogenkou@1",
+          "when": "resourceScheme == file && !listMultiSelection && ((!explorerResourceIsFolder && resourceExtname =~ /[.](novel|nv)$/i) || (explorerResourceIsFolder && resource in ogenkou.cleanTextFolders))"
         }
       ]
     },
@@ -195,14 +208,14 @@
           ],
           "enumDescriptions": [
             "《《文字》》",
-            "[[emphasismark:文字]]"
+            "[[emphasismark:文字>﹅]]"
           ],
           "default": "doubleAngle",
           "scope": "resource",
           "description": "「選択した文字に傍点を付ける」で挿入する記法。組版側でも対応する記法を有効にしてください。",
           "enumItemLabels": [
             "《《文字》》",
-            "[[emphasismark:文字]]"
+            "[[emphasismark:文字>﹅]]"
           ]
         }
       }
@@ -251,6 +264,7 @@
     "@vivliostyle/vfm": "2.7.2",
     "jsonc-parser": "3.3.1",
     "parse5": "7.3.0",
+    "pdf-lib": "1.17.1",
     "yaml": "2.9.1"
   },
   "devDependencies": {

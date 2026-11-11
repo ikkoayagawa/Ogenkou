@@ -1,0 +1,17 @@
+import {vscodeExecutable} from './vscode-executable.mjs';
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import {spawn} from 'node:child_process';
+const root=path.resolve(import.meta.dirname,'../..');
+const output=path.join(root,'.recovery/clean-text-export',String(Date.now()));
+const workspace=path.join(output,'book'),result=path.join(output,'result.json');
+await fs.mkdir(path.join(workspace,'sub'),{recursive:true});
+await fs.mkdir(path.join(workspace,'empty'),{recursive:true});
+for(const [name,text] of Object.entries({'1.nv':'｜春《はる》','2.novel':'[[emphasismark:夏>﹅]]','10.novel':'{秋|あき}','ignore.txt':'対象外','sub/99.novel':'対象外'}))await fs.writeFile(path.join(workspace,name),text);
+const child=spawn(vscodeExecutable(),[workspace,'--new-window','--disable-extensions','--disable-workspace-trust','--skip-welcome','--skip-release-notes','--user-data-dir',path.join(output,'profile'),'--extensions-dir',path.join(output,'extensions'),'--extensionDevelopmentPath',path.join(root,'extension'),'--extensionTestsPath',path.join(root,'extension/test-host/clean-text-export.cjs')],{windowsHide:true,env:{...process.env,OGENKOU_ENTRY_WORKSPACE:workspace,OGENKOU_ENTRY_RESULT:result},stdio:['ignore','pipe','pipe']});
+let log='';child.stdout.on('data',c=>log+=c);child.stderr.on('data',c=>log+=c);
+const timer=setTimeout(()=>child.kill(),90000);
+const status=await new Promise((resolve,reject)=>{child.on('exit',resolve);child.on('error',reject)});clearTimeout(timer);
+await fs.writeFile(path.join(output,'process.log'),log);
+if(status!==0)throw Error('Clean text host checks failed ('+status+'): '+output+'\n'+log.slice(-3000));
+console.log(await fs.readFile(result,'utf8'));

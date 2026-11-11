@@ -16,6 +16,7 @@ import {SourceHistory,resolveSource,type SourcePosition} from "./preview/source-
 import {calculateLayoutGeometry} from "./config/layout-geometry.js";
 import {decodePaperSize,PAPER_PRESETS} from "./config/paper-size.js";
 import {findBrowser,renderPdf} from "./services/pdf-export.js";
+import {registerCleanTextExport} from "./host/clean-text-export.js";
 import {registerNotationCommands} from "./host/notation-commands.js";
 import {registerEditorSupport} from "./host/editor-support.js";
 import {createColophon} from './services/create-colophon.js';
@@ -240,6 +241,7 @@ let session: PreviewSession|undefined;
 export async function activate(context: vscode.ExtensionContext) {
   registerEditorSupport(context);
   registerNotationCommands(context);
+  registerCleanTextExport(context);
   let opening: Promise<void>|undefined;
   const open=async(uri?: vscode.Uri,sourceGroup=vscode.window.tabGroups.activeTabGroup)=>{
     if(opening)await opening;

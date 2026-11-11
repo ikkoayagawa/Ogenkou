@@ -4,6 +4,7 @@ import {access,readFile,mkdtemp,rm} from "node:fs/promises";
 import {tmpdir} from "node:os";
 import path from "node:path";
 import {randomBytes} from "node:crypto";
+import {sanitizeGeneratedPdf} from "./pdf-privacy.js";
 import {createCoreMemoryInput} from "./core-memory-input.js";
 import type {RenderInput} from "./render-input-builder.js";
 
@@ -49,7 +50,9 @@ export async function renderPdf(input:RenderInput,runtimeDirectory:string,browse
     await send("Page.enable");await send("Page.navigate",{url:`http://127.0.0.1:${address.port}${prefix}`});let result:any;
     while(!result){signal.throwIfAborted();if(Date.now()>deadline)throw Error("PDF組版が時間内に完了しませんでした。");const value=await send("Runtime.evaluate",{expression:"({result:window.pdfResult,error:window.pdfError})",returnByValue:true});if(value.result?.value?.error)throw Error(value.result.value.error);result=value.result?.value?.result;if(!result)await pause();}
     const pdf=await send("Page.printToPDF",{printBackground:true,preferCSSPageSize:true,displayHeaderFooter:false,marginTop:0,marginBottom:0,marginLeft:0,marginRight:0,generateTaggedPDF:true});
-    return {bytes:Buffer.from(pdf.data,"base64"),...result,browser:browserPath};
+    const bytes=await sanitizeGeneratedPdf(Buffer.from(pdf.data,"base64"));
+    signal.throwIfAborted();
+    return {bytes:Buffer.from(bytes),...result,browser:browserPath};
   }finally{
     signal.removeEventListener("abort",abort);cdp?.close();child.kill();server.closeAllConnections();await new Promise<void>(resolve=>server.close(()=>resolve()));
     if(child.exitCode===null)await Promise.race([new Promise(resolve=>child.once("exit",resolve)),new Promise(resolve=>setTimeout(resolve,3000))]);

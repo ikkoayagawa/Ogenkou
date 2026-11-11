@@ -21,7 +21,7 @@ export function registerNotationCommands(context: vscode.ExtensionContext): void
       const text = texts[index]!;
       const prefix = notation === "pipeAngle" ? "｜" + text + "《" : "[[rb:" + text + ">";
       const replacement = kind === "ruby" ? prefix + (notation === "pipeAngle" ? "》" : "]]")
-        : notation === "doubleAngle" ? "《《" + text + "》》" : "[[emphasismark:" + text + "]]";
+        : notation === "doubleAngle" ? "《《" + text + "》》" : "[[emphasismark:" + text + ">﹅]]";
       return {selection, index, start: document.offsetAt(selection.start), end: document.offsetAt(selection.end), replacement, readingOffset: prefix.length};
     });
     // Each earlier replacement shifts the subsequent insertion points in UTF-16 units.

@@ -7,7 +7,7 @@ exports.run=async()=>{
  await vscode.commands.executeCommand('ogenkou.text.addEmphasis');assert.equal(document.getText(),'《《春》》と《《夏》》。');checks.push('default emphasis command edits both selections');
  await vscode.commands.executeCommand('undo');assert.equal(document.getText(),'春と夏。');checks.push('one undo restores every selection');
  await vscode.workspace.getConfiguration('ogenkou',uri).update('editing.emphasisNotation','bracket',vscode.ConfigurationTarget.Workspace);select();
- await vscode.commands.executeCommand('ogenkou.text.addEmphasis');assert.equal(document.getText(),'[[emphasismark:春]]と[[emphasismark:夏]]。');checks.push('workspace notation setting changes inserted syntax');
+ await vscode.commands.executeCommand('ogenkou.text.addEmphasis');assert.equal(document.getText(),'[[emphasismark:春>﹅]]と[[emphasismark:夏>﹅]]。');checks.push('workspace notation setting changes inserted syntax');
  await vscode.commands.executeCommand('undo');assert.equal(document.getText(),'春と夏。');
  select();await vscode.commands.executeCommand('ogenkou.text.addRuby');assert.equal(document.getText(),'｜春《》と｜夏《》。');for(const selection of editor.selections){assert(selection.isEmpty);const offset=document.offsetAt(selection.active);assert.equal(document.getText().slice(offset-1,offset+1),'《》');}checks.push('ruby creates empty readings and positions both carets');
  await vscode.commands.executeCommand('type',{text:'よみ'});assert.equal(document.getText(),'｜春《よみ》と｜夏《よみ》。');checks.push('typing fills the empty readings directly');
